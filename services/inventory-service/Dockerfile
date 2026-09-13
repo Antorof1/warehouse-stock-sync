@@ -10,6 +10,7 @@ COPY services/reorder-service/pom.xml services/reorder-service/
 COPY services/notification-service/pom.xml services/notification-service/
 RUN ./mvnw -B -pl services/inventory-service -am dependency:go-offline
 
+COPY libs/events/src libs/events/src
 COPY services/inventory-service/src services/inventory-service/src
 RUN ./mvnw -B -pl services/inventory-service -am clean package -DskipTests \
     && cp services/inventory-service/target/*.jar app.jar
