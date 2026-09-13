@@ -20,9 +20,14 @@ public class MovementController {
 
     @PostMapping
     public ResponseEntity<MovementResponse> createMovement(@RequestBody CreateMovementRequest request) {
-        Movement movement = movementService.createMovement();
+        Movement movement = movementService.createMovement(
+            request.sku(),
+            request.warehouseId(),
+            request.quantityDelta(),
+            request.reason()
+        );
 
-        MovementResponse response = new MovementResponse();
+        MovementResponse response = MovementResponse.fromEntity(movement);
 
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
