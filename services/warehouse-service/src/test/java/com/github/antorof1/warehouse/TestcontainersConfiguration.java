@@ -9,7 +9,6 @@ import org.testcontainers.utility.DockerImageName;
 
 @TestConfiguration(proxyBeanMethods = false)
 class TestcontainersConfiguration {
-
 	@Bean
 	@ServiceConnection
 	KafkaContainer kafkaContainer() {
@@ -21,5 +20,4 @@ class TestcontainersConfiguration {
 	PostgreSQLContainer postgresContainer() {
 		return new PostgreSQLContainer(DockerImageName.parse("postgres:latest"));
 	}
-
 }

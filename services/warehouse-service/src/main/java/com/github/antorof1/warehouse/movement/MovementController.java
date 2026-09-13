@@ -12,7 +12,6 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/v1/movements")
 public class MovementController {
-
     private final MovementService movementService;
 
     public MovementController(MovementService movementService) {
@@ -27,5 +26,4 @@ public class MovementController {
 
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
-
 }

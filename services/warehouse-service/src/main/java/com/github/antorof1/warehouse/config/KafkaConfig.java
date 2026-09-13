@@ -9,7 +9,6 @@ import org.springframework.kafka.config.TopicBuilder;
 
 @Configuration
 public class KafkaConfig {
-
     @Bean
     @ConditionalOnProperty(prefix = "app.kafka.topics", name = "auto-create", havingValue = "true", matchIfMissing = true)
     public NewTopic movementEventsTopic() {
@@ -18,5 +17,4 @@ public class KafkaConfig {
             .replicas(-1)
             .build();
     }
-
 }

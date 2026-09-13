@@ -9,7 +9,6 @@ import java.util.UUID;
 @Entity
 @Table(name = "movements")
 public class Movement {
-
     @Id
     @UuidGenerator(style = UuidGenerator.Style.VERSION_7)
     private UUID id;
