@@ -2,6 +2,7 @@ package com.github.antorof1.warehouse.movement;
 
 import com.github.antorof1.warehouse.movement.dto.CreateMovementRequest;
 import com.github.antorof1.warehouse.movement.dto.MovementResponse;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -19,7 +20,7 @@ public class MovementController {
     }
 
     @PostMapping
-    public ResponseEntity<MovementResponse> createMovement(@RequestBody CreateMovementRequest request) {
+    public ResponseEntity<MovementResponse> createMovement(@RequestBody @Valid CreateMovementRequest request) {
         Movement movement = movementService.createMovement(
             request.sku(),
             request.warehouseId(),
