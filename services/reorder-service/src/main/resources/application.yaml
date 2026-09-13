@@ -1,3 +1,7 @@
 spring:
   application:
     name: reorder-service
+  datasource:
+    url: jdbc:postgresql://${REORDER_DB_HOST:localhost}:${REORDER_DB_PORT:5432}/${REORDER_DB_NAME:reorder}
+    username: ${REORDER_DB_USER:reorder}
+    password: ${REORDER_DB_PASSWORD}
