@@ -1,4 +1,4 @@
-package com.github.antorof1.inventory;
+package com.github.antorof1.inventory.idempotency;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;

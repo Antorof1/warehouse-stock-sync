@@ -1,4 +1,4 @@
-package com.github.antorof1.inventory;
+package com.github.antorof1.inventory.stock;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

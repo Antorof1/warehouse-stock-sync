@@ -1,4 +1,4 @@
-package com.github.antorof1.inventory;
+package com.github.antorof1.inventory.stock;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 

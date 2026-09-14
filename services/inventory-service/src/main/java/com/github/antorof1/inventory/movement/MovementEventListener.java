@@ -1,4 +1,4 @@
-package com.github.antorof1.inventory;
+package com.github.antorof1.inventory.movement;
 
 import com.github.antorof1.events.MovementEvent;
 import com.github.antorof1.events.Topics;
