@@ -1,11 +1,11 @@
 package com.github.antorof1.inventory;
 
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
 
-@Component
+@Service
 @Transactional(readOnly = true)
 public class StockService {
     private final StockRepository stockRepository;
