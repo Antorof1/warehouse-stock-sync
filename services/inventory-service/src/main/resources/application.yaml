@@ -5,3 +5,9 @@ spring:
     url: jdbc:postgresql://${INVENTORY_DB_HOST:localhost}:${INVENTORY_DB_PORT:5432}/${INVENTORY_DB_NAME:inventory}
     username: ${INVENTORY_DB_USER:inventory}
     password: ${INVENTORY_DB_PASSWORD}
+  kafka:
+    bootstrap-servers: localhost:29092
+    consumer:
+      value-deserializer: org.springframework.kafka.support.serializer.JacksonJsonDeserializer
+      properties:
+        spring.json.trusted.packages: com.github.antorof1.events
