@@ -15,7 +15,7 @@ public class StockService {
     }
 
     @Transactional
-    public Stock updateOrAddStock(String sku, String warehouseId, Integer quantityDelta) {
+    public void applyMovement(String sku, String warehouseId, Integer quantityDelta) {
         StockId id = new StockId(sku, warehouseId);
         Optional<Stock> optionalStock = stockRepository.findById(id);
 
@@ -23,6 +23,6 @@ public class StockService {
 
         stock.setQuantity(stock.getQuantity() + quantityDelta);
 
-        return stockRepository.save(stock);
+        stockRepository.save(stock);
     }
 }
