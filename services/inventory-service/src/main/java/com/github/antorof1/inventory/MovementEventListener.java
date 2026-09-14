@@ -15,7 +15,7 @@ public class MovementEventListener {
         this.stockService = stockService;
     }
 
-    @KafkaListener(groupId = "123", topics = Topics.MOVEMENT_EVENTS)
+    @KafkaListener(topics = Topics.MOVEMENT_EVENTS)
     public void onMovementEvent(MovementEvent event) {
         stockService.updateOrAddStock(event.sku(), event.warehouseId(), event.quantityDelta());
     }
