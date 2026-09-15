@@ -20,7 +20,14 @@ public class MovementEventProcessor {
     public void process(MovementEvent event) {
         if (processedEventService.isProcessed(event.id())) return;
 
-        stockService.applyMovement(event.sku(), event.warehouseId(), event.quantityDelta());
+        stockService.applyMovement(
+            event.id(),
+            event.sku(),
+            event.warehouseId(),
+            event.quantityDelta(),
+            event.reason(),
+            event.occurredAt()
+        );
         processedEventService.markProcessed(event.id());
     }
 }

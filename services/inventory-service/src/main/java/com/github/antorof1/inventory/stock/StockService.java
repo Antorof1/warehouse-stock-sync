@@ -1,5 +1,6 @@
 package com.github.antorof1.inventory.stock;
 
+import com.github.antorof1.events.MovementReason;
 import com.github.antorof1.events.StockLevelEvent;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
@@ -7,6 +8,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.util.Optional;
+import java.util.UUID;
 
 @Service
 @Transactional(readOnly = true)
@@ -20,7 +22,9 @@ public class StockService {
     }
 
     @Transactional
-    public void applyMovement(String sku, String warehouseId, Integer quantityDelta) {
+    public void applyMovement(UUID movementId,
+                              String sku,
+                              String warehouseId, Integer quantityDelta, MovementReason reason, Instant occurredAt) {
         StockId id = new StockId(sku, warehouseId);
         Optional<Stock> optionalStock = stockRepository.findById(id);
 
@@ -31,7 +35,15 @@ public class StockService {
 
         stockRepository.save(stock);
 
-        StockLevelEvent event = new StockLevelEvent(sku, warehouseId, stock.getQuantity(), oldQuantity, Instant.now());
+        StockLevelEvent event = new StockLevelEvent(
+            movementId,
+            sku,
+            warehouseId,
+            stock.getQuantity(),
+            oldQuantity,
+            reason,
+            occurredAt
+        );
         publisher.publishEvent(event);
     }
 }
