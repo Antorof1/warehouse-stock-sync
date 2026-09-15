@@ -8,7 +8,7 @@ public record MovementEvent(
     String sku,
     String warehouseId,
     Integer quantityDelta,
-    String reason,
+    MovementReason reason,
     Instant occurredAt
 ) {
 }

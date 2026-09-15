@@ -1,6 +1,7 @@
 package com.github.antorof1.warehouse.movement;
 
 import com.github.antorof1.events.MovementEvent;
+import com.github.antorof1.events.MovementReason;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -31,7 +32,7 @@ public class MovementService {
             saved.getSku(),
             saved.getWarehouseId(),
             saved.getQuantityDelta(),
-            saved.getReason().name(),
+            saved.getReason(),
             saved.getOccurredAt()
         );
 

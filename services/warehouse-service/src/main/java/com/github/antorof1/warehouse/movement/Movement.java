@@ -1,5 +1,6 @@
 package com.github.antorof1.warehouse.movement;
 
+import com.github.antorof1.events.MovementReason;
 import jakarta.persistence.*;
 import org.hibernate.annotations.UuidGenerator;
 

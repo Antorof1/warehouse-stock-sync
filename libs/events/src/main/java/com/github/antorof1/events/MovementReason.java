@@ -1,4 +1,4 @@
-package com.github.antorof1.warehouse.movement;
+package com.github.antorof1.events;
 
 public enum MovementReason {
     RECEIPT,

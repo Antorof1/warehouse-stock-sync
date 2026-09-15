@@ -1,7 +1,7 @@
 package com.github.antorof1.warehouse.movement.dto;
 
 import com.github.antorof1.warehouse.movement.Movement;
-import com.github.antorof1.warehouse.movement.MovementReason;
+import com.github.antorof1.events.MovementReason;
 
 import java.time.Instant;
 import java.util.UUID;

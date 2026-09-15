@@ -1,6 +1,6 @@
 package com.github.antorof1.warehouse.movement.dto;
 
-import com.github.antorof1.warehouse.movement.MovementReason;
+import com.github.antorof1.events.MovementReason;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
