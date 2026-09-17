@@ -5,3 +5,10 @@ spring:
     url: jdbc:postgresql://${REORDER_DB_HOST:localhost}:${REORDER_DB_PORT:5432}/${REORDER_DB_NAME:reorder}
     username: ${REORDER_DB_USER:reorder}
     password: ${REORDER_DB_PASSWORD}
+  kafka:
+    bootstrap-servers: localhost:29092
+    consumer:
+      group-id: inventory-service
+      value-deserializer: org.springframework.kafka.support.serializer.JacksonJsonDeserializer
+      properties:
+        spring.json.trusted.packages: com.github.antorof1.events
