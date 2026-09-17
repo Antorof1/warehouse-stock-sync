@@ -1,4 +1,4 @@
-package com.github.antorof1.reorder;
+package com.github.antorof1.reorder.rule;
 
 import jakarta.persistence.*;
 
