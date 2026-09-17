@@ -14,3 +14,8 @@ spring:
         spring.json.trusted.packages: com.github.antorof1.events
     producer:
       value-serializer: org.springframework.kafka.support.serializer.JacksonJsonSerializer
+
+app:
+  kafka:
+    topics:
+      auto-create: true
