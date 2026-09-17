@@ -33,6 +33,32 @@ public class ReorderRule {
         this.pendingQuantity = pendingQuantity;
     }
 
+    public ReorderDecision apply(Integer currentQuantity, Integer previousQuantity, MovementReason reason) {
+        if (status == ReorderStatus.IN_PROGRESS && reason == MovementReason.RECEIPT) {
+            pendingQuantity -= currentQuantity - previousQuantity;
+            if (pendingQuantity > 0) {
+                return ReorderDecision.NO_CHANGE;
+            }
+
+            if (currentQuantity <= reorderPoint) {
+                pendingQuantity = reorderUpTo - currentQuantity;
+                return new ReorderDecision.ResolvedAndTriggered(id, pendingQuantity);
+            }
+
+            status = ReorderStatus.IDLE;
+            pendingQuantity = 0;
+            return new ReorderDecision.Resolved(id);
+        }
+
+        if (status == ReorderStatus.IDLE && currentQuantity <= reorderPoint) {
+            status = ReorderStatus.IN_PROGRESS;
+            pendingQuantity = reorderUpTo - currentQuantity;
+            return new ReorderDecision.Triggered(id, pendingQuantity);
+        }
+
+        return ReorderDecision.NO_CHANGE;
+    }
+
     public ReorderRuleId getId() {
         return id;
     }
