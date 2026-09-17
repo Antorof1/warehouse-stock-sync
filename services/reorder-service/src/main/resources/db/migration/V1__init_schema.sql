@@ -4,6 +4,7 @@ CREATE TABLE reorder_rules (
     reorder_point INTEGER NOT NULL,
     reorder_up_to INTEGER NOT NULL,
     status VARCHAR(64) NOT NULL,
+    pending_quantity INTEGER NOT NULL,
     PRIMARY KEY (sku, warehouse_id)
 );
 
