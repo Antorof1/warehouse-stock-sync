@@ -16,25 +16,20 @@ public class ReorderRule {
     private Integer reorderUpTo;
 
     @Column(nullable = false)
-    @Enumerated(value = EnumType.STRING)
-    private ReorderStatus status;
-
-    @Column(nullable = false)
     private Integer pendingQuantity;
 
     protected ReorderRule() {
     }
 
-    public ReorderRule(ReorderRuleId id, Integer reorderPoint, Integer reorderUpTo, ReorderStatus status, Integer pendingQuantity) {
+    public ReorderRule(ReorderRuleId id, Integer reorderPoint, Integer reorderUpTo, Integer pendingQuantity) {
         this.id = id;
         this.reorderPoint = reorderPoint;
         this.reorderUpTo = reorderUpTo;
-        this.status = status;
         this.pendingQuantity = pendingQuantity;
     }
 
     public ReorderDecision apply(Integer currentQuantity, Integer previousQuantity, MovementReason reason) {
-        if (status == ReorderStatus.IN_PROGRESS && reason == MovementReason.RECEIPT) {
+        if (pendingQuantity > 0 && reason == MovementReason.RECEIPT) {
             pendingQuantity -= currentQuantity - previousQuantity;
             if (pendingQuantity > 0) {
                 return ReorderDecision.NO_CHANGE;
@@ -45,13 +40,11 @@ public class ReorderRule {
                 return new ReorderDecision.ResolvedAndTriggered(id, pendingQuantity);
             }
 
-            status = ReorderStatus.IDLE;
             pendingQuantity = 0;
             return new ReorderDecision.Resolved(id);
         }
 
-        if (status == ReorderStatus.IDLE && currentQuantity <= reorderPoint) {
-            status = ReorderStatus.IN_PROGRESS;
+        if (pendingQuantity == 0 && currentQuantity <= reorderPoint) {
             pendingQuantity = reorderUpTo - currentQuantity;
             return new ReorderDecision.Triggered(id, pendingQuantity);
         }
@@ -81,14 +74,6 @@ public class ReorderRule {
 
     public void setReorderUpTo(Integer reorderUpTo) {
         this.reorderUpTo = reorderUpTo;
-    }
-
-    public ReorderStatus getStatus() {
-        return status;
-    }
-
-    public void setStatus(ReorderStatus status) {
-        this.status = status;
     }
 
     public Integer getPendingQuantity() {
