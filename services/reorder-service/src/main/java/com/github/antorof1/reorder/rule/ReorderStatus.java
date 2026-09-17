@@ -2,5 +2,5 @@ package com.github.antorof1.reorder.rule;
 
 public enum ReorderStatus {
     IDLE,
-    IN_PROCESS
+    IN_PROGRESS
 }
