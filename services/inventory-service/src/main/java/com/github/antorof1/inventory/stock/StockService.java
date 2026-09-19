@@ -1,5 +1,6 @@
 package com.github.antorof1.inventory.stock;
 
+import com.fasterxml.uuid.Generators;
 import com.github.antorof1.events.MovementReason;
 import com.github.antorof1.events.StockLevelEvent;
 import org.springframework.context.ApplicationEventPublisher;
@@ -36,7 +37,7 @@ public class StockService {
         stockRepository.save(stock);
 
         StockLevelEvent event = new StockLevelEvent(
-            movementId,
+            Generators.timeBasedEpochGenerator().generate(),
             sku,
             warehouseId,
             stock.getQuantity(),

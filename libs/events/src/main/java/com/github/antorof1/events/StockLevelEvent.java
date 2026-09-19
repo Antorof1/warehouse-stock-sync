@@ -4,7 +4,7 @@ import java.time.Instant;
 import java.util.UUID;
 
 public record StockLevelEvent(
-    UUID movementId,
+    UUID id,
     String sku,
     String warehouseId,
     Integer newLevel,
