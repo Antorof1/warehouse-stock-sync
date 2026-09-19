@@ -14,13 +14,13 @@ public class ProcessedEventService {
         this.processedEventRepository = processedEventRepository;
     }
 
-    public boolean isProcessed(UUID id) {
-        return processedEventRepository.existsById(id);
+    public boolean isProcessed(UUID eventId, String eventTopic) {
+        return processedEventRepository.existsById(new ProcessedEventId(eventId, eventTopic));
     }
 
     @Transactional
-    public void markProcessed(UUID id) {
-        ProcessedEvent event = new ProcessedEvent(id);
+    public void markProcessed(UUID eventId, String eventTopic) {
+        ProcessedEvent event = new ProcessedEvent(new ProcessedEventId(eventId, eventTopic));
 
         processedEventRepository.save(event);
     }
