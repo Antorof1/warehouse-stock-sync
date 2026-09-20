@@ -12,3 +12,9 @@ spring:
       value-deserializer: org.springframework.kafka.support.serializer.JacksonJsonDeserializer
       properties:
         spring.json.trusted.packages: com.github.antorof1.events
+
+app:
+  notification:
+    rules:
+      bulk-movement:
+        threshold: 500
