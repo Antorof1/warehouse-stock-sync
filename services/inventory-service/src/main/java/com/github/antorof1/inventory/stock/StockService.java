@@ -8,7 +8,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
-import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -23,24 +22,16 @@ public class StockService {
     }
 
     @Transactional
-    public void applyMovement(UUID movementId,
-                              String sku,
-                              String warehouseId, Integer quantityDelta, MovementReason reason, Instant occurredAt) {
-        StockId id = new StockId(sku, warehouseId);
-        Optional<Stock> optionalStock = stockRepository.findById(id);
-
-        Stock stock = optionalStock.orElse(new Stock(id, 0));
-
-        Integer oldQuantity = stock.getQuantity();
-        stock.setQuantity(oldQuantity + quantityDelta);
-
-        stockRepository.save(stock);
+    public void applyMovement(String sku, String warehouseId, Integer quantityDelta, MovementReason reason,
+                              Instant occurredAt) {
+        Integer newQuantity = stockRepository.applyDelta(sku, warehouseId, quantityDelta);
+        Integer oldQuantity = newQuantity - quantityDelta;
 
         StockLevelEvent event = new StockLevelEvent(
             Generators.timeBasedEpochGenerator().generate(),
             sku,
             warehouseId,
-            stock.getQuantity(),
+            newQuantity,
             oldQuantity,
             reason,
             occurredAt

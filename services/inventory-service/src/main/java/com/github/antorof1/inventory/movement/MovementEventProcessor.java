@@ -21,7 +21,6 @@ public class MovementEventProcessor {
         if (processedEventService.isProcessed(event.id())) return;
 
         stockService.applyMovement(
-            event.id(),
             event.sku(),
             event.warehouseId(),
             event.quantityDelta(),
