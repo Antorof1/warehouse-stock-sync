@@ -21,6 +21,8 @@ public class MovementService {
 
     @Transactional
     public Movement createMovement(String sku, String warehouseId, Integer quantityDelta, MovementReason reason) {
+        if (quantityDelta == 0) throw new IllegalArgumentException("Quantity delta can't be zero");
+
         Instant occurredAt = Instant.now();
 
         Movement movement = new Movement(sku, warehouseId, quantityDelta, reason, occurredAt);
