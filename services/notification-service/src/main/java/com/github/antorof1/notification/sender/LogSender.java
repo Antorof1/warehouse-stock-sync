@@ -13,6 +13,11 @@ public class LogSender implements NotificationSender {
 
     @Override
     public void send(Notification notification) {
-        log.info(notification.label() + " " + notification.body());
+        String message = notification.label() + " " + notification.body();
+        switch (notification.severity()) {
+            case INFO -> log.info(message);
+            case WARNING -> log.warn(message);
+            case CRITICAL -> log.error(message);
+        }
     }
 }

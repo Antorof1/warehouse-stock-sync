@@ -3,6 +3,7 @@ package com.github.antorof1.notification.rule;
 import com.github.antorof1.events.MovementEvent;
 import com.github.antorof1.events.MovementReason;
 import com.github.antorof1.notification.dispatch.Notification;
+import com.github.antorof1.notification.dispatch.NotificationSeverity;
 import org.springframework.stereotype.Component;
 
 import java.util.Optional;
@@ -16,7 +17,8 @@ public class DamagedStockRule implements NotificationRule<MovementEvent> {
         return Optional.of(new Notification(
             "Damaged stock: %s".formatted(event.sku()),
             "%d units of %s were damaged at warehouse %s."
-                .formatted(Math.abs(event.quantityDelta()), event.sku(), event.warehouseId())
+                .formatted(Math.abs(event.quantityDelta()), event.sku(), event.warehouseId()),
+            NotificationSeverity.WARNING
         ));
     }
 }
