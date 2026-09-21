@@ -12,7 +12,8 @@ CREATE TABLE orders (
     warehouse_id VARCHAR(64) NOT NULL,
     quantity INTEGER NOT NULL,
     received_quantity INTEGER NOT NULL,
-    status VARCHAR(16) NOT NULL
+    status VARCHAR(16) NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
 CREATE UNIQUE INDEX uq_orders_open_per_sku_warehouse

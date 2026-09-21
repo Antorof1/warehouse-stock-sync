@@ -6,8 +6,11 @@ import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import org.hibernate.annotations.Generated;
 import org.hibernate.annotations.UuidGenerator;
+import org.hibernate.generator.EventType;
 
+import java.time.Instant;
 import java.util.UUID;
 
 @Entity
@@ -32,6 +35,10 @@ public class Order {
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
     private OrderStatus status;
+
+    @Column(nullable = false, insertable = false, updatable = false)
+    @Generated(event = EventType.INSERT)
+    private Instant createdAt;
 
     protected Order() {
     }
@@ -79,5 +86,9 @@ public class Order {
 
     public OrderStatus getStatus() {
         return status;
+    }
+
+    public Instant getCreatedAt() {
+        return createdAt;
     }
 }
