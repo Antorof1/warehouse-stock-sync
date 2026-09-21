@@ -1,5 +1,7 @@
 package com.github.antorof1.reorder.purchaseorder;
 
+import com.github.antorof1.events.purchaseorder.PurchaseOrderCompletedEvent;
+import com.github.antorof1.events.purchaseorder.PurchaseOrderExpiredEvent;
 import com.github.antorof1.events.purchaseorder.PurchaseOrderPlacedEvent;
 import com.github.antorof1.events.Topics;
 import org.slf4j.Logger;
@@ -8,6 +10,8 @@ import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
+
+import java.util.UUID;
 
 @Component
 public class PurchaseOrderEventPublisher {
@@ -20,12 +24,28 @@ public class PurchaseOrderEventPublisher {
     }
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
-    public void onPurchaseOrderEvent(PurchaseOrderPlacedEvent event) {
-        kafkaTemplate.send(Topics.PURCHASE_ORDER_EVENTS, event.sku(), event)
+    public void onPurchaseOrderPlacedEvent(PurchaseOrderPlacedEvent event) {
+        sendEvent(event, event.sku(), event.id());
+    }
+
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    public void onPurchaseOrderCompletedEvent(PurchaseOrderCompletedEvent event) {
+        sendEvent(event, event.sku(), event.id());
+    }
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    public void onPurchaseOrderExpiredEvent(PurchaseOrderExpiredEvent event) {
+        sendEvent(event, event.sku(), event.id());
+    }
+
+    private void sendEvent(Object event, String sku, UUID id) {
+        kafkaTemplate.send(Topics.PURCHASE_ORDER_EVENTS, sku, event)
             .whenComplete((result, e) -> {
                 if (e == null) return;
 
-                log.error("Failed to publish stock level event id={} sku={}", event.id(), event.sku(), e);
+                log.error("Failed to publish purchase order event type={} id={} sku={}",
+                    event.getClass().getSimpleName(), id, sku, e);
             });
     }
 }
