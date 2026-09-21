@@ -43,7 +43,7 @@ public class StockLevelEventProcessor {
         if (processedEventService.isProcessed(event.id())) return;
 
         ReorderRuleId ruleId = new ReorderRuleId(event.sku(), event.warehouseId());
-        reorderRuleRepository.findById(ruleId).ifPresentOrElse(
+        reorderRuleRepository.findAndLockById(ruleId).ifPresentOrElse(
             rule -> reorder(rule, event),
             () -> log.debug("No reorder rule for {}", ruleId)
         );
