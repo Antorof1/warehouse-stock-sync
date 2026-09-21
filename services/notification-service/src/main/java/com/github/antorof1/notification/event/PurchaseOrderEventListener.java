@@ -51,4 +51,9 @@ public class PurchaseOrderEventListener {
 
         processedEventService.markProcessed(event.id(), Topics.PURCHASE_ORDER_EVENTS);
     }
+
+    @KafkaHandler(isDefault = true)
+    public void onUnhandledEvent(Object event) {
+        log.debug("No notification handling for {}", event.getClass().getSimpleName());
+    }
 }
