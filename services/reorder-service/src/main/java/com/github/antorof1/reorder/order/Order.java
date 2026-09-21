@@ -45,7 +45,9 @@ public class Order {
     }
 
     public void receive(int quantityReceived) {
-        receivedQuantity += quantityReceived;
+        int outstanding = quantity - receivedQuantity;
+
+        receivedQuantity += Math.min(quantityReceived, outstanding);
         if (receivedQuantity >= quantity) {
             status = OrderStatus.COMPLETED;
         }
