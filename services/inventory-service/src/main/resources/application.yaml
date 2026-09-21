@@ -11,7 +11,7 @@ spring:
       group-id: inventory-service
       value-deserializer: org.springframework.kafka.support.serializer.JacksonJsonDeserializer
       properties:
-        spring.json.trusted.packages: com.github.antorof1.events
+        spring.json.trusted.packages: com.github.antorof1.events*
     producer:
       value-serializer: org.springframework.kafka.support.serializer.JacksonJsonSerializer
 
