@@ -1,7 +1,7 @@
 package com.github.antorof1.notification.event;
 
 import com.github.antorof1.events.MovementEvent;
-import com.github.antorof1.events.PurchaseOrderEvent;
+import com.github.antorof1.events.order.PurchaseOrderPlacedEvent;
 import com.github.antorof1.events.StockLevelEvent;
 import com.github.antorof1.events.Topics;
 import com.github.antorof1.notification.dispatch.NotificationDispatcher;
@@ -38,7 +38,7 @@ public class EventListeners {
     }
 
     @KafkaListener(topics = Topics.PURCHASE_ORDER_EVENTS)
-    public void onPurchaseOrderEvent(PurchaseOrderEvent event) {
+    public void onPurchaseOrderEvent(PurchaseOrderPlacedEvent event) {
         if (processedEventService.isProcessed(event.id(), Topics.PURCHASE_ORDER_EVENTS)) return;
 
         dispatcher.process(event);

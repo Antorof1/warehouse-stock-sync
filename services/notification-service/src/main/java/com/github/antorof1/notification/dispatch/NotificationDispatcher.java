@@ -1,7 +1,7 @@
 package com.github.antorof1.notification.dispatch;
 
 import com.github.antorof1.events.MovementEvent;
-import com.github.antorof1.events.PurchaseOrderEvent;
+import com.github.antorof1.events.order.PurchaseOrderPlacedEvent;
 import com.github.antorof1.events.StockLevelEvent;
 import com.github.antorof1.notification.rule.NotificationRule;
 import com.github.antorof1.notification.sender.NotificationSender;
@@ -15,11 +15,11 @@ public class NotificationDispatcher {
 
     private final List<NotificationRule<MovementEvent>> movementRules;
     private final List<NotificationRule<StockLevelEvent>> levelRules;
-    private final List<NotificationRule<PurchaseOrderEvent>> orderRules;
+    private final List<NotificationRule<PurchaseOrderPlacedEvent>> orderRules;
 
     public NotificationDispatcher(NotificationSender sender, List<NotificationRule<MovementEvent>> movementRules,
                                   List<NotificationRule<StockLevelEvent>> levelRules,
-                                  List<NotificationRule<PurchaseOrderEvent>> orderRules) {
+                                  List<NotificationRule<PurchaseOrderPlacedEvent>> orderRules) {
         this.sender = sender;
         this.movementRules = movementRules;
         this.levelRules = levelRules;
@@ -38,7 +38,7 @@ public class NotificationDispatcher {
             .forEach(notification -> notification.ifPresent(sender::send));
     }
 
-    public void process(PurchaseOrderEvent event) {
+    public void process(PurchaseOrderPlacedEvent event) {
         orderRules.stream()
             .map(rule -> rule.evaluate(event))
             .forEach(notification -> notification.ifPresent(sender::send));

@@ -1,6 +1,6 @@
 package com.github.antorof1.reorder.order;
 
-import com.github.antorof1.events.PurchaseOrderEvent;
+import com.github.antorof1.events.order.PurchaseOrderPlacedEvent;
 import com.github.antorof1.events.Topics;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,7 +20,7 @@ public class PurchaseOrderEventPublisher {
     }
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
-    public void onPurchaseOrderEvent(PurchaseOrderEvent event) {
+    public void onPurchaseOrderEvent(PurchaseOrderPlacedEvent event) {
         kafkaTemplate.send(Topics.PURCHASE_ORDER_EVENTS, event.sku(), event)
             .whenComplete((result, e) -> {
                 if (e == null) return;

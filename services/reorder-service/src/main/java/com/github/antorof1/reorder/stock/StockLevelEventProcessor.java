@@ -1,7 +1,7 @@
 package com.github.antorof1.reorder.stock;
 
 import com.github.antorof1.events.MovementReason;
-import com.github.antorof1.events.PurchaseOrderEvent;
+import com.github.antorof1.events.order.PurchaseOrderPlacedEvent;
 import com.github.antorof1.events.StockLevelEvent;
 import com.github.antorof1.reorder.idempotency.ProcessedEventService;
 import com.github.antorof1.reorder.order.Order;
@@ -67,7 +67,7 @@ public class StockLevelEventProcessor {
         if (quantity > 0) {
             Order saved = orderRepository.save(new Order(event.sku(), event.warehouseId(), quantity));
 
-            PurchaseOrderEvent orderEvent = new PurchaseOrderEvent(
+            PurchaseOrderPlacedEvent orderEvent = new PurchaseOrderPlacedEvent(
                 saved.getId(),
                 saved.getSku(),
                 saved.getWarehouseId(),
