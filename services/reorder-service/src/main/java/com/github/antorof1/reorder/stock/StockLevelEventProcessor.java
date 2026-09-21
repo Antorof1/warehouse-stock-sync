@@ -1,12 +1,12 @@
 package com.github.antorof1.reorder.stock;
 
 import com.github.antorof1.events.MovementReason;
-import com.github.antorof1.events.order.PurchaseOrderPlacedEvent;
+import com.github.antorof1.events.purchaseorder.PurchaseOrderPlacedEvent;
 import com.github.antorof1.events.StockLevelEvent;
 import com.github.antorof1.reorder.idempotency.ProcessedEventService;
-import com.github.antorof1.reorder.order.Order;
-import com.github.antorof1.reorder.order.OrderRepository;
-import com.github.antorof1.reorder.order.OrderStatus;
+import com.github.antorof1.reorder.purchaseorder.PurchaseOrder;
+import com.github.antorof1.reorder.purchaseorder.PurchaseOrderRepository;
+import com.github.antorof1.reorder.purchaseorder.PurchaseOrderStatus;
 import com.github.antorof1.reorder.rule.ReorderRule;
 import com.github.antorof1.reorder.rule.ReorderRuleId;
 import com.github.antorof1.reorder.rule.ReorderRuleRepository;
@@ -24,16 +24,16 @@ public class StockLevelEventProcessor {
     private static final Logger log = LoggerFactory.getLogger(StockLevelEventProcessor.class);
 
     private final ReorderRuleRepository reorderRuleRepository;
-    private final OrderRepository orderRepository;
+    private final PurchaseOrderRepository purchaseOrderRepository;
     private final ProcessedEventService processedEventService;
     private final ApplicationEventPublisher publisher;
 
     public StockLevelEventProcessor(ReorderRuleRepository reorderRuleRepository,
-                                    OrderRepository orderRepository,
+                                    PurchaseOrderRepository purchaseOrderRepository,
                                     ProcessedEventService processedEventService,
                                     ApplicationEventPublisher publisher) {
         this.reorderRuleRepository = reorderRuleRepository;
-        this.orderRepository = orderRepository;
+        this.purchaseOrderRepository = purchaseOrderRepository;
         this.processedEventService = processedEventService;
         this.publisher = publisher;
     }
@@ -52,22 +52,22 @@ public class StockLevelEventProcessor {
     }
 
     private void reorder(ReorderRule rule, StockLevelEvent event) {
-        Optional<Order> openOrder = orderRepository
-            .findBySkuAndWarehouseIdAndStatus(event.sku(), event.warehouseId(), OrderStatus.OPEN);
+        Optional<PurchaseOrder> openOrder = purchaseOrderRepository
+            .findBySkuAndWarehouseIdAndStatus(event.sku(), event.warehouseId(), PurchaseOrderStatus.OPEN);
 
         if (openOrder.isPresent()) {
             if (event.reason() != MovementReason.RECEIPT) return;
 
-            Order order = openOrder.get();
+            PurchaseOrder order = openOrder.get();
             order.receive(event.newLevel() - event.previousLevel());
             if (order.isOpen()) return;
         }
 
         int quantity = rule.quantityToOrder(event.newLevel());
         if (quantity > 0) {
-            Order saved = orderRepository.save(new Order(event.sku(), event.warehouseId(), quantity));
+            PurchaseOrder saved = purchaseOrderRepository.save(new PurchaseOrder(event.sku(), event.warehouseId(), quantity));
 
-            PurchaseOrderPlacedEvent orderEvent = new PurchaseOrderPlacedEvent(
+            PurchaseOrderPlacedEvent placedEvent = new PurchaseOrderPlacedEvent(
                 saved.getId(),
                 saved.getSku(),
                 saved.getWarehouseId(),
@@ -75,7 +75,7 @@ public class StockLevelEventProcessor {
                 Instant.now()
             );
 
-            publisher.publishEvent(orderEvent);
+            publisher.publishEvent(placedEvent);
         }
     }
 }

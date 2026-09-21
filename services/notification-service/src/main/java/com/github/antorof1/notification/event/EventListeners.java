@@ -1,7 +1,7 @@
 package com.github.antorof1.notification.event;
 
 import com.github.antorof1.events.MovementEvent;
-import com.github.antorof1.events.order.PurchaseOrderPlacedEvent;
+import com.github.antorof1.events.purchaseorder.PurchaseOrderPlacedEvent;
 import com.github.antorof1.events.StockLevelEvent;
 import com.github.antorof1.events.Topics;
 import com.github.antorof1.notification.dispatch.NotificationDispatcher;

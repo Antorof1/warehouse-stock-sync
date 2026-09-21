@@ -1,6 +1,6 @@
 package com.github.antorof1.notification.rule;
 
-import com.github.antorof1.events.order.PurchaseOrderPlacedEvent;
+import com.github.antorof1.events.purchaseorder.PurchaseOrderPlacedEvent;
 import com.github.antorof1.notification.dispatch.Notification;
 import com.github.antorof1.notification.dispatch.NotificationSeverity;
 import org.springframework.stereotype.Component;
@@ -8,7 +8,7 @@ import org.springframework.stereotype.Component;
 import java.util.Optional;
 
 @Component
-public class OrderPlacedRule implements NotificationRule<PurchaseOrderPlacedEvent> {
+public class PurchaseOrderPlacedRule implements NotificationRule<PurchaseOrderPlacedEvent> {
     @Override
     public Optional<Notification> evaluate(PurchaseOrderPlacedEvent event) {
         return Optional.of(new Notification(

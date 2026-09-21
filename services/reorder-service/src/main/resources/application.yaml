@@ -16,7 +16,7 @@ spring:
       value-serializer: org.springframework.kafka.support.serializer.JacksonJsonSerializer
 
 app:
-  orders:
+  purchase-orders:
     ttl: P7D
     sweep-interval: PT1H
   kafka:

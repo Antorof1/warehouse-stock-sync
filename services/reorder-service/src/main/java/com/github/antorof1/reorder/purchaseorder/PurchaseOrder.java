@@ -1,4 +1,4 @@
-package com.github.antorof1.reorder.order;
+package com.github.antorof1.reorder.purchaseorder;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -14,8 +14,8 @@ import java.time.Instant;
 import java.util.UUID;
 
 @Entity
-@Table(name = "orders")
-public class Order {
+@Table(name = "purchase_orders")
+public class PurchaseOrder {
     @Id
     @UuidGenerator(style = UuidGenerator.Style.VERSION_7)
     private UUID id;
@@ -34,21 +34,21 @@ public class Order {
 
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
-    private OrderStatus status;
+    private PurchaseOrderStatus status;
 
     @Column(nullable = false, insertable = false, updatable = false)
     @Generated(event = EventType.INSERT)
     private Instant createdAt;
 
-    protected Order() {
+    protected PurchaseOrder() {
     }
 
-    public Order(String sku, String warehouseId, int quantity) {
+    public PurchaseOrder(String sku, String warehouseId, int quantity) {
         this.sku = sku;
         this.warehouseId = warehouseId;
         this.quantity = quantity;
         this.receivedQuantity = 0;
-        this.status = OrderStatus.OPEN;
+        this.status = PurchaseOrderStatus.OPEN;
     }
 
     public void receive(int quantityReceived) {
@@ -56,12 +56,12 @@ public class Order {
 
         receivedQuantity += Math.min(quantityReceived, outstanding);
         if (receivedQuantity >= quantity) {
-            status = OrderStatus.COMPLETED;
+            status = PurchaseOrderStatus.COMPLETED;
         }
     }
 
     public boolean isOpen() {
-        return status == OrderStatus.OPEN;
+        return status == PurchaseOrderStatus.OPEN;
     }
 
     public UUID getId() {
@@ -84,7 +84,7 @@ public class Order {
         return receivedQuantity;
     }
 
-    public OrderStatus getStatus() {
+    public PurchaseOrderStatus getStatus() {
         return status;
     }
 

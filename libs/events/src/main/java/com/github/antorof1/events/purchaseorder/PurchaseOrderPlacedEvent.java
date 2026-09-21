@@ -1,4 +1,4 @@
-package com.github.antorof1.events.order;
+package com.github.antorof1.events.purchaseorder;
 
 import java.time.Instant;
 import java.util.UUID;

@@ -1,6 +1,6 @@
-package com.github.antorof1.reorder.order;
+package com.github.antorof1.reorder.purchaseorder;
 
-import com.github.antorof1.events.order.PurchaseOrderPlacedEvent;
+import com.github.antorof1.events.purchaseorder.PurchaseOrderPlacedEvent;
 import com.github.antorof1.events.Topics;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

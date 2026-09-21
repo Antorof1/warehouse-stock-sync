@@ -6,7 +6,7 @@ CREATE TABLE reorder_rules (
     PRIMARY KEY (sku, warehouse_id)
 );
 
-CREATE TABLE orders (
+CREATE TABLE purchase_orders (
     id UUID PRIMARY KEY,
     sku VARCHAR(64) NOT NULL,
     warehouse_id VARCHAR(64) NOT NULL,
@@ -16,8 +16,8 @@ CREATE TABLE orders (
     created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
-CREATE UNIQUE INDEX uq_orders_open_per_sku_warehouse
-    ON orders (sku, warehouse_id) WHERE status = 'OPEN';
+CREATE UNIQUE INDEX uq_purchase_orders_open_per_sku_warehouse
+    ON purchase_orders (sku, warehouse_id) WHERE status = 'OPEN';
 
 CREATE TABLE processed_events (
     id UUID PRIMARY KEY
