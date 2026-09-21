@@ -1,5 +1,6 @@
 package com.github.antorof1.reorder.stock;
 
+import com.fasterxml.uuid.Generators;
 import com.github.antorof1.events.MovementReason;
 import com.github.antorof1.events.purchaseorder.PurchaseOrderPlacedEvent;
 import com.github.antorof1.events.StockLevelEvent;
@@ -68,7 +69,7 @@ public class StockLevelEventProcessor {
             PurchaseOrder saved = purchaseOrderRepository.save(new PurchaseOrder(event.sku(), event.warehouseId(), quantity));
 
             PurchaseOrderPlacedEvent placedEvent = new PurchaseOrderPlacedEvent(
-                saved.getId(),
+                Generators.timeBasedEpochGenerator().generate(),
                 saved.getSku(),
                 saved.getWarehouseId(),
                 saved.getQuantity(),
