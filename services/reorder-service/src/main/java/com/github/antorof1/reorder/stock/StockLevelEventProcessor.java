@@ -2,6 +2,7 @@ package com.github.antorof1.reorder.stock;
 
 import com.fasterxml.uuid.Generators;
 import com.github.antorof1.events.MovementReason;
+import com.github.antorof1.events.purchaseorder.PurchaseOrderCompletedEvent;
 import com.github.antorof1.events.purchaseorder.PurchaseOrderPlacedEvent;
 import com.github.antorof1.events.StockLevelEvent;
 import com.github.antorof1.reorder.idempotency.ProcessedEventService;
@@ -62,6 +63,17 @@ public class StockLevelEventProcessor {
             PurchaseOrder order = openOrder.get();
             order.receive(event.newLevel() - event.previousLevel());
             if (order.isOpen()) return;
+
+            PurchaseOrderCompletedEvent completedEvent = new PurchaseOrderCompletedEvent(
+                Generators.timeBasedEpochGenerator().generate(),
+                order.getSku(),
+                order.getWarehouseId(),
+                order.getQuantity(),
+                order.getCreatedAt(),
+                Instant.now()
+            );
+
+            publisher.publishEvent(completedEvent);
         }
 
         int quantity = rule.quantityToOrder(event.newLevel());
