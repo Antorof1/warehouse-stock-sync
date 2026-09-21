@@ -36,13 +36,4 @@ public class EventListeners {
 
         processedEventService.markProcessed(event.id(), Topics.STOCK_LEVEL_EVENTS);
     }
-
-    @KafkaListener(topics = Topics.PURCHASE_ORDER_EVENTS)
-    public void onPurchaseOrderPlacedEvent(PurchaseOrderPlacedEvent event) {
-        if (processedEventService.isProcessed(event.id(), Topics.PURCHASE_ORDER_EVENTS)) return;
-
-        dispatcher.process(event);
-
-        processedEventService.markProcessed(event.id(), Topics.PURCHASE_ORDER_EVENTS);
-    }
 }
