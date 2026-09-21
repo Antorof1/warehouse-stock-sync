@@ -15,15 +15,15 @@ public class NotificationDispatcher {
 
     private final List<NotificationRule<MovementEvent>> movementRules;
     private final List<NotificationRule<StockLevelEvent>> levelRules;
-    private final List<NotificationRule<PurchaseOrderPlacedEvent>> purchaseOrderRules;
+    private final List<NotificationRule<PurchaseOrderPlacedEvent>> purchaseOrderPlacedRules;
 
     public NotificationDispatcher(NotificationSender sender, List<NotificationRule<MovementEvent>> movementRules,
                                   List<NotificationRule<StockLevelEvent>> levelRules,
-                                  List<NotificationRule<PurchaseOrderPlacedEvent>> purchaseOrderRules) {
+                                  List<NotificationRule<PurchaseOrderPlacedEvent>> purchaseOrderPlacedRules) {
         this.sender = sender;
         this.movementRules = movementRules;
         this.levelRules = levelRules;
-        this.purchaseOrderRules = purchaseOrderRules;
+        this.purchaseOrderPlacedRules = purchaseOrderPlacedRules;
     }
 
     public void process(MovementEvent event) {
@@ -39,7 +39,7 @@ public class NotificationDispatcher {
     }
 
     public void process(PurchaseOrderPlacedEvent event) {
-        purchaseOrderRules.stream()
+        purchaseOrderPlacedRules.stream()
             .map(rule -> rule.evaluate(event))
             .forEach(notification -> notification.ifPresent(sender::send));
     }

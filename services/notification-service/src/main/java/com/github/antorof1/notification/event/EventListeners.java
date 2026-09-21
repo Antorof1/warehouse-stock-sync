@@ -38,7 +38,7 @@ public class EventListeners {
     }
 
     @KafkaListener(topics = Topics.PURCHASE_ORDER_EVENTS)
-    public void onPurchaseOrderEvent(PurchaseOrderPlacedEvent event) {
+    public void onPurchaseOrderPlacedEvent(PurchaseOrderPlacedEvent event) {
         if (processedEventService.isProcessed(event.id(), Topics.PURCHASE_ORDER_EVENTS)) return;
 
         dispatcher.process(event);
