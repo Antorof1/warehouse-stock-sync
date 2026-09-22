@@ -36,14 +36,14 @@ public class PurchaseOrderEventListener {
     public void onPurchaseOrderCompletedEvent(PurchaseOrderCompletedEvent event) {
         if (!processedEventService.tryMarkProcessed(event.id(), Topics.PURCHASE_ORDER_EVENTS)) return;
 
-        log.debug("PurchaseOrderCompletedEvent ignored");
+        dispatcher.process(event);
     }
 
     @KafkaHandler
     public void onPurchaseOrderExpiredEvent(PurchaseOrderExpiredEvent event) {
         if (!processedEventService.tryMarkProcessed(event.id(), Topics.PURCHASE_ORDER_EVENTS)) return;
 
-        log.debug("PurchaseOrderExpiredEvent ignored");
+        dispatcher.process(event);
     }
 
     @KafkaHandler(isDefault = true)
