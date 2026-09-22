@@ -42,15 +42,13 @@ public class StockLevelEventProcessor {
 
     @Transactional
     public void process(StockLevelEvent event) {
-        if (processedEventService.isProcessed(event.id())) return;
+        if (!processedEventService.tryMarkProcessed(event.id())) return;
 
         ReorderRuleId ruleId = new ReorderRuleId(event.sku(), event.warehouseId());
         reorderRuleRepository.findAndLockById(ruleId).ifPresentOrElse(
             rule -> reorder(rule, event),
             () -> log.debug("No reorder rule for {}", ruleId)
         );
-
-        processedEventService.markProcessed(event.id());
     }
 
     private void reorder(ReorderRule rule, StockLevelEvent event) {

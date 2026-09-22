@@ -23,7 +23,6 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.willThrow;
 import static org.mockito.Mockito.inOrder;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 
@@ -41,7 +40,7 @@ class MovementEventProcessorTest {
     @Test
     void appliesTheMovementToStock() {
         MovementEvent event = movementEvent(SKU, -4, MovementReason.PICK);
-        givenNotProcessed(event);
+        givenClaimed(event);
 
         processor.process(event);
 
@@ -51,43 +50,40 @@ class MovementEventProcessorTest {
     }
 
     @Test
-    void marksTheEventProcessedOnlyAfterApplyingIt() {
+    void claimsTheEventBeforeApplyingIt() {
         MovementEvent event = movementEvent(SKU, 7);
-        givenNotProcessed(event);
+        givenClaimed(event);
 
         processor.process(event);
 
-        InOrder inOrder = inOrder(stockService, processedEventService);
+        InOrder inOrder = inOrder(processedEventService, stockService);
+        inOrder.verify(processedEventService).tryMarkProcessed(event.id());
         inOrder.verify(stockService).applyMovement(anyString(), anyString(), anyInt(), any(), any());
-        inOrder.verify(processedEventService).markProcessed(event.id());
     }
 
     @Test
     void skipsAnEventThatWasAlreadyProcessed() {
         MovementEvent event = movementEvent(SKU, 7);
-        given(processedEventService.isProcessed(event.id())).willReturn(true);
+        given(processedEventService.tryMarkProcessed(event.id())).willReturn(false);
 
         processor.process(event);
 
         verifyNoInteractions(stockService);
-        verify(processedEventService, never()).markProcessed(any());
     }
 
     @Test
-    void doesNotMarkTheEventProcessedWhenApplyingItFails() {
+    void propagatesAFailureFromApplyingTheMovement() {
         MovementEvent event = movementEvent(SKU, 7);
-        givenNotProcessed(event);
+        givenClaimed(event);
         willThrow(new DataIntegrityViolationException("stock write failed"))
             .given(stockService).applyMovement(anyString(), anyString(), anyInt(), any(), any());
 
         assertThatThrownBy(() -> processor.process(event))
-            .as("the listener must see the failure so the transaction rolls back and Kafka redelivers")
+            .as("the listener must see the failure so the transaction rolls the claim back and Kafka redelivers")
             .isInstanceOf(DataIntegrityViolationException.class);
-
-        verify(processedEventService, never()).markProcessed(any());
     }
 
-    private void givenNotProcessed(MovementEvent event) {
-        given(processedEventService.isProcessed(event.id())).willReturn(false);
+    private void givenClaimed(MovementEvent event) {
+        given(processedEventService.tryMarkProcessed(event.id())).willReturn(true);
     }
 }

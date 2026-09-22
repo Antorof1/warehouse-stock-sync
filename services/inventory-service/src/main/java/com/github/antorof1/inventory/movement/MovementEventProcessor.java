@@ -18,7 +18,7 @@ public class MovementEventProcessor {
 
     @Transactional
     public void process(MovementEvent event) {
-        if (processedEventService.isProcessed(event.id())) return;
+        if (!processedEventService.tryMarkProcessed(event.id())) return;
 
         stockService.applyMovement(
             event.sku(),
@@ -27,6 +27,5 @@ public class MovementEventProcessor {
             event.reason(),
             event.occurredAt()
         );
-        processedEventService.markProcessed(event.id());
     }
 }

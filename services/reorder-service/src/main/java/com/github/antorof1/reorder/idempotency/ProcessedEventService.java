@@ -14,14 +14,8 @@ public class ProcessedEventService {
         this.processedEventRepository = processedEventRepository;
     }
 
-    public boolean isProcessed(UUID id) {
-        return processedEventRepository.existsById(id);
-    }
-
     @Transactional
-    public void markProcessed(UUID id) {
-        ProcessedEvent event = new ProcessedEvent(id);
-
-        processedEventRepository.save(event);
+    public boolean tryMarkProcessed(UUID id) {
+        return processedEventRepository.insertIgnoreConflict(id) > 0;
     }
 }

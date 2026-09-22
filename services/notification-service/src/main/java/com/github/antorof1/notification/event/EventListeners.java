@@ -21,19 +21,15 @@ public class EventListeners {
 
     @KafkaListener(topics = Topics.MOVEMENT_EVENTS)
     public void onMovementEvent(MovementEvent event) {
-        if (processedEventService.isProcessed(event.id(), Topics.MOVEMENT_EVENTS)) return;
+        if (!processedEventService.tryMarkProcessed(event.id(), Topics.MOVEMENT_EVENTS)) return;
 
         dispatcher.process(event);
-
-        processedEventService.markProcessed(event.id(), Topics.MOVEMENT_EVENTS);
     }
 
     @KafkaListener(topics = Topics.STOCK_LEVEL_EVENTS)
     public void onStockLevelEvent(StockLevelEvent event) {
-        if (processedEventService.isProcessed(event.id(), Topics.STOCK_LEVEL_EVENTS)) return;
+        if (!processedEventService.tryMarkProcessed(event.id(), Topics.STOCK_LEVEL_EVENTS)) return;
 
         dispatcher.process(event);
-
-        processedEventService.markProcessed(event.id(), Topics.STOCK_LEVEL_EVENTS);
     }
 }

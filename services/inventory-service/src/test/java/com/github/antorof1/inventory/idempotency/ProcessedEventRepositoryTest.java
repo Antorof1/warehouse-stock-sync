@@ -11,7 +11,6 @@ import java.util.UUID;
 
 import static com.github.antorof1.inventory.utils.StockUtils.newEventId;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @IntegrationTest
@@ -39,15 +38,32 @@ class ProcessedEventRepositoryTest {
     }
 
     @Test
-    void acceptsTheSameIdTwiceBecauseSaveMerges() {
+    void insertsANewEventIdAndCountsTheWrite() {
+        UUID id = newEventId();
+
+        assertThat(processedEventRepository.insertIgnoreConflict(id)).isEqualTo(1);
+
+        assertThat(rowCountFor(id)).isEqualTo(1);
+    }
+
+    @Test
+    void countsNoWriteWhenTheEventIdIsAlreadyStored() {
+        UUID id = newEventId();
+        processedEventRepository.insertIgnoreConflict(id);
+
+        assertThat(processedEventRepository.insertIgnoreConflict(id))
+            .as("ON CONFLICT DO NOTHING turns the duplicate into an empty write instead of an error")
+            .isZero();
+
+        assertThat(rowCountFor(id)).isEqualTo(1);
+    }
+
+    @Test
+    void countsNoWriteForAnEventIdStoredThroughJpa() {
         UUID id = newEventId();
         processedEventRepository.saveAndFlush(new ProcessedEvent(id));
 
-        assertThatCode(() -> processedEventRepository.saveAndFlush(new ProcessedEvent(id)))
-            .as("the assigned id makes save() a merge, so idempotency rests on the isProcessed check")
-            .doesNotThrowAnyException();
-
-        assertThat(rowCountFor(id)).isEqualTo(1);
+        assertThat(processedEventRepository.insertIgnoreConflict(id)).isZero();
     }
 
     @Test
@@ -56,7 +72,7 @@ class ProcessedEventRepositoryTest {
         insert(id);
 
         assertThatThrownBy(() -> insert(id))
-            .as("the primary key is the last line of defence when two consumers race on one event")
+            .as("the primary key is what ON CONFLICT DO NOTHING relies on when two consumers race on one event")
             .isInstanceOf(DuplicateKeyException.class);
     }
 

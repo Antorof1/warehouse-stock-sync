@@ -27,29 +27,23 @@ public class PurchaseOrderEventListener {
 
     @KafkaHandler
     public void onPurchaseOrderPlacedEvent(PurchaseOrderPlacedEvent event) {
-        if (processedEventService.isProcessed(event.id(), Topics.PURCHASE_ORDER_EVENTS)) return;
+        if (!processedEventService.tryMarkProcessed(event.id(), Topics.PURCHASE_ORDER_EVENTS)) return;
 
         dispatcher.process(event);
-
-        processedEventService.markProcessed(event.id(), Topics.PURCHASE_ORDER_EVENTS);
     }
 
     @KafkaHandler
     public void onPurchaseOrderCompletedEvent(PurchaseOrderCompletedEvent event) {
-        if (processedEventService.isProcessed(event.id(), Topics.PURCHASE_ORDER_EVENTS)) return;
+        if (!processedEventService.tryMarkProcessed(event.id(), Topics.PURCHASE_ORDER_EVENTS)) return;
 
         log.debug("PurchaseOrderCompletedEvent ignored");
-
-        processedEventService.markProcessed(event.id(), Topics.PURCHASE_ORDER_EVENTS);
     }
 
     @KafkaHandler
     public void onPurchaseOrderExpiredEvent(PurchaseOrderExpiredEvent event) {
-        if (processedEventService.isProcessed(event.id(), Topics.PURCHASE_ORDER_EVENTS)) return;
+        if (!processedEventService.tryMarkProcessed(event.id(), Topics.PURCHASE_ORDER_EVENTS)) return;
 
         log.debug("PurchaseOrderExpiredEvent ignored");
-
-        processedEventService.markProcessed(event.id(), Topics.PURCHASE_ORDER_EVENTS);
     }
 
     @KafkaHandler(isDefault = true)

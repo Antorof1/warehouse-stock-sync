@@ -4,8 +4,8 @@ import com.github.antorof1.events.MovementEvent;
 import com.github.antorof1.events.StockLevelEvent;
 import com.github.antorof1.inventory.IntegrationTest;
 import com.github.antorof1.inventory.idempotency.ProcessedEventRepository;
-import com.github.antorof1.inventory.idempotency.ProcessedEventService;
 import com.github.antorof1.inventory.stock.StockRepository;
+import com.github.antorof1.inventory.stock.StockService;
 import com.github.antorof1.inventory.utils.StockLevelTopicConsumer;
 import com.github.antorof1.inventory.utils.StockUtils;
 import org.junit.jupiter.api.Test;
@@ -15,13 +15,14 @@ import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.testcontainers.kafka.KafkaContainer;
 
 import java.time.Duration;
-import java.util.UUID;
 
 import static com.github.antorof1.inventory.utils.StockUtils.movementEvent;
 import static com.github.antorof1.inventory.utils.StockUtils.stockId;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.willThrow;
 
 @IntegrationTest
@@ -41,7 +42,7 @@ class MovementEventProcessorTransactionTest {
     private KafkaContainer kafkaContainer;
 
     @MockitoSpyBean
-    private ProcessedEventService processedEventService;
+    private StockService stockService;
 
     @Test
     void commitsTheStockChangeAndTheProcessedMarkerTogether() {
@@ -55,19 +56,20 @@ class MovementEventProcessorTransactionTest {
     }
 
     @Test
-    void rollsBackTheStockChangeWhenTheProcessedMarkerFails() {
+    void rollsBackTheProcessedMarkerWhenTheStockChangeFails() {
         String sku = StockUtils.uniqueSku();
         MovementEvent event = movementEvent(sku, 12);
-        willThrow(new DataIntegrityViolationException("processed_events is unavailable"))
-            .given(processedEventService).markProcessed(any(UUID.class));
+        willThrow(new DataIntegrityViolationException("stock is unavailable"))
+            .given(stockService).applyMovement(anyString(), anyString(), anyInt(), any(), any());
 
         try (StockLevelTopicConsumer<StockLevelEvent> consumer = downstreamConsumer()) {
             assertThatThrownBy(() -> processor.process(event))
                 .isInstanceOf(DataIntegrityViolationException.class);
 
-            assertThat(stockRepository.findById(stockId(sku)))
-                .as("the stock write shares the transaction with the processed marker")
-                .isEmpty();
+            assertThat(processedEventRepository.existsById(event.id()))
+                .as("the marker is claimed up front, so it must roll back with the failed stock write")
+                .isFalse();
+            assertThat(stockRepository.findById(stockId(sku))).isEmpty();
             assertThat(consumer.findRecordFor(sku, QUIET_WINDOW))
                 .as("the publisher only fires after commit, so a rolled back movement stays off the topic")
                 .isEmpty();
