@@ -19,6 +19,8 @@ import java.util.Optional;
 import java.util.UUID;
 
 public final class StockLevelTopicConsumer<V> implements AutoCloseable {
+    public static final String STOCK_LEVEL_CHANGED_TYPE = "inventory.stock-level.changed";
+
     private static final Duration POLL_INTERVAL = Duration.ofMillis(200);
     private static final Duration AWAIT_TIMEOUT = Duration.ofSeconds(20);
 
@@ -34,6 +36,10 @@ public final class StockLevelTopicConsumer<V> implements AutoCloseable {
         Map<String, Object> properties = baseProperties(bootstrapServers);
         properties.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, JacksonJsonDeserializer.class);
         properties.put(JacksonJsonDeserializer.TRUSTED_PACKAGES, "com.github.antorof1.events");
+        properties.put(
+            JacksonJsonDeserializer.TYPE_MAPPINGS,
+            STOCK_LEVEL_CHANGED_TYPE + ":" + StockLevelEvent.class.getName()
+        );
 
         return new StockLevelTopicConsumer<>(new KafkaConsumer<>(properties));
     }

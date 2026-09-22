@@ -1,6 +1,8 @@
 spring:
   application:
     name: inventory-service
+  config:
+    import: classpath:events-kafka.yaml
   datasource:
     url: jdbc:postgresql://${INVENTORY_DB_HOST:localhost}:${INVENTORY_DB_PORT:5432}/${INVENTORY_DB_NAME:inventory}
     username: ${INVENTORY_DB_USER:inventory}
@@ -10,8 +12,6 @@ spring:
     consumer:
       group-id: inventory-service
       value-deserializer: org.springframework.kafka.support.serializer.JacksonJsonDeserializer
-      properties:
-        spring.json.trusted.packages: com.github.antorof1.events*
     producer:
       value-serializer: org.springframework.kafka.support.serializer.JacksonJsonSerializer
 

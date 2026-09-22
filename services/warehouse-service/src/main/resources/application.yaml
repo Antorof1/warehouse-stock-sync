@@ -1,6 +1,8 @@
 spring:
   application:
     name: warehouse-service
+  config:
+    import: classpath:events-kafka.yaml
   datasource:
     url: jdbc:postgresql://${WAREHOUSE_DB_HOST:localhost}:${WAREHOUSE_DB_PORT:5432}/${WAREHOUSE_DB_NAME:warehouse}
     username: ${WAREHOUSE_DB_USER:warehouse}

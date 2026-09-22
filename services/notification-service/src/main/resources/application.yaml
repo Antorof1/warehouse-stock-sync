@@ -1,6 +1,8 @@
 spring:
   application:
     name: notification-service
+  config:
+    import: classpath:events-kafka.yaml
   datasource:
     url: jdbc:postgresql://${NOTIFICATION_DB_HOST:localhost}:${NOTIFICATION_DB_PORT:5432}/${NOTIFICATION_DB_NAME:notification}
     username: ${NOTIFICATION_DB_USER:notification}
@@ -10,8 +12,6 @@ spring:
     consumer:
       group-id: notification-service
       value-deserializer: org.springframework.kafka.support.serializer.JacksonJsonDeserializer
-      properties:
-        spring.json.trusted.packages: com.github.antorof1.events*
 
 app:
   notification:

@@ -19,6 +19,8 @@ import java.util.Optional;
 import java.util.UUID;
 
 public final class MovementTopicConsumer<V> implements AutoCloseable {
+    public static final String MOVEMENT_RECORDED_TYPE = "warehouse.movement.recorded";
+
     private static final Duration POLL_INTERVAL = Duration.ofMillis(200);
     private static final Duration AWAIT_TIMEOUT = Duration.ofSeconds(20);
 
@@ -33,6 +35,10 @@ public final class MovementTopicConsumer<V> implements AutoCloseable {
         Map<String, Object> properties = baseProperties(bootstrapServers);
         properties.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, JacksonJsonDeserializer.class);
         properties.put(JacksonJsonDeserializer.TRUSTED_PACKAGES, "com.github.antorof1.events");
+        properties.put(
+            JacksonJsonDeserializer.TYPE_MAPPINGS,
+            MOVEMENT_RECORDED_TYPE + ":" + MovementEvent.class.getName()
+        );
 
         return new MovementTopicConsumer<>(new KafkaConsumer<>(properties));
     }

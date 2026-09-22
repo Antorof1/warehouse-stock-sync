@@ -1,0 +1,14 @@
+spring:
+  kafka:
+    consumer:
+      properties:
+        spring.json.trusted.packages: com.github.antorof1.events*
+        spring.json.type.mapping: &types >
+          warehouse.movement.recorded:com.github.antorof1.events.MovementEvent,
+          inventory.stock-level.changed:com.github.antorof1.events.StockLevelEvent,
+          reorder.purchase-order.placed:com.github.antorof1.events.purchaseorder.PurchaseOrderPlacedEvent,
+          reorder.purchase-order.completed:com.github.antorof1.events.purchaseorder.PurchaseOrderCompletedEvent,
+          reorder.purchase-order.expired:com.github.antorof1.events.purchaseorder.PurchaseOrderExpiredEvent
+    producer:
+      properties:
+        spring.json.type.mapping: *types

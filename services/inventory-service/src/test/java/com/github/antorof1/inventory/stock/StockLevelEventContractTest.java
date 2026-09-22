@@ -71,7 +71,9 @@ class StockLevelEventContractTest {
 
             Header typeHeader = record.headers().lastHeader("__TypeId__");
             assertThat(typeHeader).as("consumers resolve the payload type from this header").isNotNull();
-            assertThat(new String(typeHeader.value(), StandardCharsets.UTF_8)).isEqualTo(StockLevelEvent.class.getName());
+            assertThat(new String(typeHeader.value(), StandardCharsets.UTF_8))
+                .as("logical name, not the Java class, travels on the wire")
+                .isEqualTo(StockLevelTopicConsumer.STOCK_LEVEL_CHANGED_TYPE);
         }
     }
 

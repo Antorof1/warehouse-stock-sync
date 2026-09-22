@@ -1,6 +1,8 @@
 spring:
   application:
     name: reorder-service
+  config:
+    import: classpath:events-kafka.yaml
   datasource:
     url: jdbc:postgresql://${REORDER_DB_HOST:localhost}:${REORDER_DB_PORT:5432}/${REORDER_DB_NAME:reorder}
     username: ${REORDER_DB_USER:reorder}
@@ -10,8 +12,6 @@ spring:
     consumer:
       group-id: reorder-service
       value-deserializer: org.springframework.kafka.support.serializer.JacksonJsonDeserializer
-      properties:
-        spring.json.trusted.packages: com.github.antorof1.events*
     producer:
       value-serializer: org.springframework.kafka.support.serializer.JacksonJsonSerializer
 

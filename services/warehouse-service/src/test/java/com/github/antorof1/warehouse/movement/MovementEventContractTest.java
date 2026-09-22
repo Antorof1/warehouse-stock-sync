@@ -62,7 +62,9 @@ class MovementEventContractTest {
 
             Header typeHeader = record.headers().lastHeader("__TypeId__");
             assertThat(typeHeader).as("consumer resolves the payload type from this header").isNotNull();
-            assertThat(new String(typeHeader.value(), StandardCharsets.UTF_8)).isEqualTo(MovementEvent.class.getName());
+            assertThat(new String(typeHeader.value(), StandardCharsets.UTF_8))
+                .as("logical name, not the Java class, travels on the wire")
+                .isEqualTo(MovementTopicConsumer.MOVEMENT_RECORDED_TYPE);
         }
     }
 
