@@ -10,6 +10,11 @@ import java.util.Optional;
 @Component
 public class PurchaseOrderPlacedRule implements NotificationRule<PurchaseOrderPlacedEvent> {
     @Override
+    public Class<PurchaseOrderPlacedEvent> eventType() {
+        return PurchaseOrderPlacedEvent.class;
+    }
+
+    @Override
     public Optional<Notification> evaluate(PurchaseOrderPlacedEvent event) {
         return Optional.of(new Notification(
             "Purchase order placed: %s".formatted(event.sku()),

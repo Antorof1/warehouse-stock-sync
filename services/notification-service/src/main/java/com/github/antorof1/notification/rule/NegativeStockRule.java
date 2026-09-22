@@ -10,6 +10,11 @@ import java.util.Optional;
 @Component
 public class NegativeStockRule implements NotificationRule<StockLevelEvent> {
     @Override
+    public Class<StockLevelEvent> eventType() {
+        return StockLevelEvent.class;
+    }
+
+    @Override
     public Optional<Notification> evaluate(StockLevelEvent event) {
         if (event.newLevel() >= 0) return Optional.empty();
 

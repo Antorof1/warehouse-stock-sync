@@ -11,6 +11,11 @@ import java.util.Optional;
 @Component
 public class DamagedStockRule implements NotificationRule<MovementEvent> {
     @Override
+    public Class<MovementEvent> eventType() {
+        return MovementEvent.class;
+    }
+
+    @Override
     public Optional<Notification> evaluate(MovementEvent event) {
         if (event.reason() != MovementReason.DAMAGE) return Optional.empty();
 

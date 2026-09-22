@@ -17,6 +17,11 @@ public class BulkMovementRule implements NotificationRule<MovementEvent> {
     }
 
     @Override
+    public Class<MovementEvent> eventType() {
+        return MovementEvent.class;
+    }
+
+    @Override
     public Optional<Notification> evaluate(MovementEvent event) {
         int quantity = Math.abs(event.quantityDelta());
         if (quantity < threshold) return Optional.empty();

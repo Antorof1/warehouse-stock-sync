@@ -1,8 +1,5 @@
 package com.github.antorof1.notification.dispatch;
 
-import com.github.antorof1.events.MovementEvent;
-import com.github.antorof1.events.purchaseorder.PurchaseOrderPlacedEvent;
-import com.github.antorof1.events.StockLevelEvent;
 import com.github.antorof1.notification.rule.NotificationRule;
 import com.github.antorof1.notification.sender.NotificationSender;
 import org.springframework.stereotype.Service;
@@ -12,35 +9,16 @@ import java.util.List;
 @Service
 public class NotificationDispatcher {
     private final NotificationSender sender;
+    private final List<NotificationRule<?>> rules;
 
-    private final List<NotificationRule<MovementEvent>> movementRules;
-    private final List<NotificationRule<StockLevelEvent>> levelRules;
-    private final List<NotificationRule<PurchaseOrderPlacedEvent>> purchaseOrderPlacedRules;
-
-    public NotificationDispatcher(NotificationSender sender, List<NotificationRule<MovementEvent>> movementRules,
-                                  List<NotificationRule<StockLevelEvent>> levelRules,
-                                  List<NotificationRule<PurchaseOrderPlacedEvent>> purchaseOrderPlacedRules) {
+    public NotificationDispatcher(NotificationSender sender, List<NotificationRule<?>> rules) {
         this.sender = sender;
-        this.movementRules = movementRules;
-        this.levelRules = levelRules;
-        this.purchaseOrderPlacedRules = purchaseOrderPlacedRules;
+        this.rules = rules;
     }
 
-    public void process(MovementEvent event) {
-        movementRules.stream()
-            .map(rule -> rule.evaluate(event))
-            .forEach(notification -> notification.ifPresent(sender::send));
-    }
-
-    public void process(StockLevelEvent event) {
-        levelRules.stream()
-            .map(rule -> rule.evaluate(event))
-            .forEach(notification -> notification.ifPresent(sender::send));
-    }
-
-    public void process(PurchaseOrderPlacedEvent event) {
-        purchaseOrderPlacedRules.stream()
-            .map(rule -> rule.evaluate(event))
+    public void process(Object event) {
+        rules.stream()
+            .map(rule -> rule.evaluateIfMatches(event))
             .forEach(notification -> notification.ifPresent(sender::send));
     }
 }
