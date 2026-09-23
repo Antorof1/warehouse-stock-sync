@@ -62,6 +62,8 @@ public class StockLevelEventProcessor {
             order.receive(event.newLevel() - event.previousLevel());
             if (order.isOpen()) return;
 
+            purchaseOrderRepository.flush();
+
             PurchaseOrderCompletedEvent completedEvent = new PurchaseOrderCompletedEvent(
                 Generators.timeBasedEpochGenerator().generate(),
                 order.getSku(),
