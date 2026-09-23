@@ -2,7 +2,8 @@ package com.github.antorof1.warehouse.movement;
 
 import com.github.antorof1.events.MovementEvent;
 import com.github.antorof1.events.MovementReason;
-import org.springframework.context.ApplicationEventPublisher;
+import com.github.antorof1.events.Topics;
+import com.github.antorof1.warehouse.outbox.OutboxEventService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -12,11 +13,11 @@ import java.time.Instant;
 @Transactional(readOnly = true)
 public class MovementService {
     private final MovementRepository movementRepository;
-    private final ApplicationEventPublisher publisher;
+    private final OutboxEventService outboxEventService;
 
-    public MovementService(MovementRepository movementRepository, ApplicationEventPublisher publisher) {
+    public MovementService(MovementRepository movementRepository, OutboxEventService outboxEventService) {
         this.movementRepository = movementRepository;
-        this.publisher = publisher;
+        this.outboxEventService = outboxEventService;
     }
 
     @Transactional
@@ -38,7 +39,7 @@ public class MovementService {
             saved.getOccurredAt()
         );
 
-        publisher.publishEvent(event);
+        outboxEventService.record(saved.getId(), Topics.MOVEMENT_EVENTS, sku, event);
 
         return saved;
     }
