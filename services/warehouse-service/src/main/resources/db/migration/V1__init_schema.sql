@@ -18,3 +18,4 @@ CREATE TABLE outbox_events (
 );
 
 CREATE INDEX idx_outbox_pending ON outbox_events (created_at) WHERE published_at IS NULL;
+CREATE INDEX idx_outbox_published ON outbox_events (published_at) WHERE published_at IS NOT NULL;
