@@ -3,6 +3,7 @@ package com.github.antorof1.warehouse.movement;
 import com.github.antorof1.events.MovementEvent;
 import com.github.antorof1.events.MovementReason;
 import com.github.antorof1.warehouse.IntegrationTest;
+import com.github.antorof1.warehouse.outbox.OutboxEventRepository;
 import com.github.antorof1.warehouse.utils.MovementUtils;
 import com.github.antorof1.warehouse.utils.MovementTopicConsumer;
 import com.jayway.jsonpath.JsonPath;
@@ -38,6 +39,9 @@ class MovementApiIntegrationTest {
 
     @Autowired
     private MovementService movementService;
+
+    @Autowired
+    private OutboxEventRepository outboxEventRepository;
 
     @Autowired
     private PlatformTransactionManager transactionManager;
@@ -92,15 +96,17 @@ class MovementApiIntegrationTest {
         String sku = MovementUtils.uniqueSku();
 
         try (MovementTopicConsumer<MovementEvent> consumer = subscribedConsumer()) {
-            new TransactionTemplate(transactionManager).executeWithoutResult(status -> {
-                movementService.createMovement(sku, WAREHOUSE_ID, 12, MovementReason.RECEIPT);
+            UUID id = new TransactionTemplate(transactionManager).execute(status -> {
+                Movement movement = movementService.createMovement(sku, WAREHOUSE_ID, 12, MovementReason.RECEIPT);
                 status.setRollbackOnly();
+                return movement.getId();
             });
 
             assertThat(movementRepository.findAll()).noneMatch(movement -> sku.equals(movement.getSku()));
+            assertThat(outboxEventRepository.findById(id)).as("the outbox row rolls back with the movement").isEmpty();
 
             Optional<ConsumerRecord<String, MovementEvent>> published = consumer.findRecordFor(sku, SILENCE_WINDOW);
-            assertThat(published).as("the AFTER_COMMIT listener must not fire on rollback").isEmpty();
+            assertThat(published).as("a rolled-back outbox row is never published").isEmpty();
         }
     }
 

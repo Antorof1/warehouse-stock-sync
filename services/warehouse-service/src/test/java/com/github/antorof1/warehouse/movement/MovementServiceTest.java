@@ -2,6 +2,8 @@ package com.github.antorof1.warehouse.movement;
 
 import com.github.antorof1.events.MovementEvent;
 import com.github.antorof1.events.MovementReason;
+import com.github.antorof1.events.Topics;
+import com.github.antorof1.warehouse.outbox.OutboxEventService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -9,7 +11,6 @@ import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.dao.DataIntegrityViolationException;
 
 import java.time.Instant;
@@ -20,7 +21,9 @@ import static com.github.antorof1.warehouse.utils.MovementUtils.WAREHOUSE_ID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.BDDMockito.willThrow;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 
@@ -32,7 +35,7 @@ class MovementServiceTest {
     private MovementRepository movementRepository;
 
     @Mock
-    private ApplicationEventPublisher publisher;
+    private OutboxEventService outboxEventService;
 
     @InjectMocks
     private MovementService movementService;
@@ -78,7 +81,7 @@ class MovementServiceTest {
     }
 
     @Test
-    void publishesEventCarryingTheDatabaseGeneratedId() {
+    void recordsEventCarryingTheDatabaseGeneratedId() {
         givenRepositoryAssignsId();
 
         movementService.createMovement(SKU, WAREHOUSE_ID, 7, MovementReason.RECEIPT);
@@ -87,7 +90,7 @@ class MovementServiceTest {
     }
 
     @Test
-    void publishesEventMirroringThePersistedMovement() {
+    void recordsEventMirroringThePersistedMovement() {
         givenRepositoryAssignsId();
 
         movementService.createMovement(SKU, WAREHOUSE_ID, -3, MovementReason.PICK);
@@ -104,13 +107,32 @@ class MovementServiceTest {
     }
 
     @Test
-    void publishesNothingWhenPersistingFails() {
+    void recordsNothingWhenPersistingFails() {
         given(movementRepository.save(any(Movement.class))).willThrow(new DataIntegrityViolationException("sku too long"));
 
         assertThatThrownBy(() -> movementService.createMovement(SKU, WAREHOUSE_ID, 7, MovementReason.RECEIPT))
             .isInstanceOf(DataIntegrityViolationException.class);
 
-        verifyNoInteractions(publisher);
+        verifyNoInteractions(outboxEventService);
+    }
+
+    @Test
+    void recordsEventOnTheMovementTopicKeyedBySkuUnderTheMovementId() {
+        givenRepositoryAssignsId();
+
+        movementService.createMovement(SKU, WAREHOUSE_ID, 7, MovementReason.RECEIPT);
+
+        verify(outboxEventService).record(eq(GENERATED_ID), eq(Topics.MOVEMENT_EVENTS), eq(SKU), any(MovementEvent.class));
+    }
+
+    @Test
+    void propagatesOutboxFailureSoTheTransactionRollsBack() {
+        givenRepositoryAssignsId();
+        willThrow(new IllegalArgumentException("no type mapping"))
+            .given(outboxEventService).record(any(), any(), any(), any());
+
+        assertThatThrownBy(() -> movementService.createMovement(SKU, WAREHOUSE_ID, 7, MovementReason.RECEIPT))
+            .isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test
@@ -118,7 +140,7 @@ class MovementServiceTest {
         assertThatThrownBy(() -> movementService.createMovement(SKU, WAREHOUSE_ID, 0, MovementReason.ADJUSTMENT))
             .isInstanceOf(IllegalArgumentException.class);
 
-        verifyNoInteractions(movementRepository, publisher);
+        verifyNoInteractions(movementRepository, outboxEventService);
     }
 
     private void givenRepositoryAssignsId() {
@@ -145,7 +167,7 @@ class MovementServiceTest {
     }
 
     private MovementEvent capturedEvent() {
-        verify(publisher).publishEvent(eventCaptor.capture());
+        verify(outboxEventService).record(any(), any(), any(), eventCaptor.capture());
 
         return eventCaptor.getValue();
     }
