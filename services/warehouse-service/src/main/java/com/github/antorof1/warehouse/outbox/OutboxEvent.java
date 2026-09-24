@@ -79,8 +79,4 @@ public class OutboxEvent {
     public Instant getCreatedAt() {
         return createdAt;
     }
-
-    public void markPublished() {
-        publishedAt = Instant.now();
-    }
 }
