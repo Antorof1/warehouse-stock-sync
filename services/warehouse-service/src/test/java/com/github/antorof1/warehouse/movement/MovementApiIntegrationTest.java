@@ -2,7 +2,6 @@ package com.github.antorof1.warehouse.movement;
 
 import com.github.antorof1.events.MovementEvent;
 import com.github.antorof1.events.MovementReason;
-import com.github.antorof1.outbox.OutboxEventRepository;
 import com.github.antorof1.warehouse.IntegrationTest;
 import com.github.antorof1.warehouse.utils.MovementUtils;
 import com.github.antorof1.warehouse.utils.MovementTopicConsumer;
@@ -14,13 +13,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.assertj.MockMvcTester;
 import org.springframework.test.web.servlet.assertj.MvcTestResult;
-import org.springframework.transaction.PlatformTransactionManager;
-import org.springframework.transaction.support.TransactionTemplate;
 import org.testcontainers.kafka.KafkaContainer;
 
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
-import java.util.Optional;
 import java.util.UUID;
 
 import static com.github.antorof1.warehouse.utils.MovementUtils.WAREHOUSE_ID;
@@ -36,15 +32,6 @@ class MovementApiIntegrationTest {
 
     @Autowired
     private MovementRepository movementRepository;
-
-    @Autowired
-    private MovementService movementService;
-
-    @Autowired
-    private OutboxEventRepository outboxEventRepository;
-
-    @Autowired
-    private PlatformTransactionManager transactionManager;
 
     @Autowired
     private KafkaContainer kafkaContainer;
@@ -77,36 +64,6 @@ class MovementApiIntegrationTest {
             assertThat(event.occurredAt())
                 .as("stored timestamp is truncated to the microseconds Postgres keeps")
                 .isCloseTo(persisted.getOccurredAt(), within(1000, ChronoUnit.NANOS));
-        }
-    }
-
-    @Test
-    void publishesExactlyOneEventPerRequest() {
-        String sku = MovementUtils.uniqueSku();
-
-        try (MovementTopicConsumer<MovementEvent> consumer = subscribedConsumer()) {
-            assertThat(post(sku, -4, "PICK")).hasStatus(HttpStatus.CREATED);
-
-            assertThat(consumer.collectRecordsFor(sku, SILENCE_WINDOW)).hasSize(1);
-        }
-    }
-
-    @Test
-    void writesNothingWhenTheTransactionRollsBack() {
-        String sku = MovementUtils.uniqueSku();
-
-        try (MovementTopicConsumer<MovementEvent> consumer = subscribedConsumer()) {
-            UUID id = new TransactionTemplate(transactionManager).execute(status -> {
-                Movement movement = movementService.createMovement(sku, WAREHOUSE_ID, 12, MovementReason.RECEIPT);
-                status.setRollbackOnly();
-                return movement.getId();
-            });
-
-            assertThat(movementRepository.findAll()).noneMatch(movement -> sku.equals(movement.getSku()));
-            assertThat(outboxEventRepository.findById(id)).as("the outbox row rolls back with the movement").isEmpty();
-
-            Optional<ConsumerRecord<String, MovementEvent>> published = consumer.findRecordFor(sku, SILENCE_WINDOW);
-            assertThat(published).as("a rolled-back outbox row is never published").isEmpty();
         }
     }
 

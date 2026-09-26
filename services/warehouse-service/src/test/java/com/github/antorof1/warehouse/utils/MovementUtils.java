@@ -1,6 +1,5 @@
 package com.github.antorof1.warehouse.utils;
 
-import com.github.antorof1.events.MovementEvent;
 import com.github.antorof1.events.MovementReason;
 import com.github.antorof1.warehouse.movement.Movement;
 
@@ -31,10 +30,6 @@ public final class MovementUtils {
         Movement movement = movement();
         movement.setId(id);
         return movement;
-    }
-
-    public static MovementEvent event() {
-        return new MovementEvent(UUID.randomUUID(), SKU, WAREHOUSE_ID, QUANTITY_DELTA, REASON, OCCURRED_AT);
     }
 
     public static String uniqueSku() {

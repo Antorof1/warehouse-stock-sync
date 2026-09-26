@@ -12,7 +12,6 @@ import org.springframework.kafka.test.utils.KafkaTestUtils;
 
 import java.time.Duration;
 import java.time.Instant;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -74,21 +73,6 @@ public final class MovementTopicConsumer<V> implements AutoCloseable {
         }
 
         return Optional.empty();
-    }
-
-    public List<ConsumerRecord<String, V>> collectRecordsFor(String sku, Duration within) {
-        List<ConsumerRecord<String, V>> matches = new ArrayList<>();
-        Instant deadline = Instant.now().plus(within);
-
-        while (Instant.now().isBefore(deadline)) {
-            for (ConsumerRecord<String, V> record : consumer.poll(POLL_INTERVAL)) {
-                if (!sku.equals(record.key())) continue;
-
-                matches.add(record);
-            }
-        }
-
-        return matches;
     }
 
     @Override
