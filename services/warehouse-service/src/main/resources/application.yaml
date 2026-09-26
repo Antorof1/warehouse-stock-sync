@@ -13,9 +13,6 @@ spring:
       value-serializer: org.apache.kafka.common.serialization.StringSerializer
 
 app:
-  outbox:
-    retention: P7D
-    sweep-interval: PT1H
   kafka:
     topics:
       auto-create: true

@@ -1,7 +1,6 @@
-package com.github.antorof1.warehouse.outbox;
+package com.github.antorof1.outbox;
 
 import org.springframework.boot.kafka.autoconfigure.KafkaProperties;
-import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -12,7 +11,6 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-@Service
 public class OutboxEventService {
     private static final String TYPE_MAPPING_PROPERTY = "spring.json.type.mapping";
 

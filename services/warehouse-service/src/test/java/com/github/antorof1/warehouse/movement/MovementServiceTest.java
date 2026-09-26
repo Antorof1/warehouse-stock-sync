@@ -3,7 +3,7 @@ package com.github.antorof1.warehouse.movement;
 import com.github.antorof1.events.MovementEvent;
 import com.github.antorof1.events.MovementReason;
 import com.github.antorof1.events.Topics;
-import com.github.antorof1.warehouse.outbox.OutboxEventService;
+import com.github.antorof1.outbox.OutboxEventService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;

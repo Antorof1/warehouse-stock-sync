@@ -1,4 +1,4 @@
-package com.github.antorof1.warehouse.outbox;
+package com.github.antorof1.outbox;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;

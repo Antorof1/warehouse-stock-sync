@@ -1,4 +1,4 @@
-package com.github.antorof1.warehouse.outbox;
+package com.github.antorof1.outbox;
 
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.errors.RetriableException;
@@ -7,28 +7,27 @@ import org.slf4j.LoggerFactory;
 import org.springframework.kafka.KafkaException;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.support.SendResult;
-import org.springframework.scheduling.annotation.Scheduled;
-import org.springframework.stereotype.Component;
 
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 
-@Component
 public class OutboxPublisher {
     private static final Logger log = LoggerFactory.getLogger(OutboxPublisher.class);
     private final OutboxEventRepository outboxEventRepository;
     private final KafkaTemplate<String, String> kafkaTemplate;
+    private final int batchSize;
 
-    public OutboxPublisher(OutboxEventRepository outboxEventRepository, KafkaTemplate<String, String> kafkaTemplate) {
+    public OutboxPublisher(OutboxEventRepository outboxEventRepository, KafkaTemplate<String, String> kafkaTemplate,
+                           OutboxProperties outboxProperties) {
         this.outboxEventRepository = outboxEventRepository;
         this.kafkaTemplate = kafkaTemplate;
+        this.batchSize = outboxProperties.batchSize();
     }
 
-    @Scheduled(fixedDelay = 500)
     public void poll() {
-        List<OutboxEvent> batch = outboxEventRepository.findPending(100);
+        List<OutboxEvent> batch = outboxEventRepository.findPending(batchSize);
         if (batch.isEmpty()) return;
 
         Map<UUID, CompletableFuture<SendResult<String, String>>> sends = startSends(batch);

@@ -1,4 +1,4 @@
-package com.github.antorof1.warehouse.outbox;
+package com.github.antorof1.outbox;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
