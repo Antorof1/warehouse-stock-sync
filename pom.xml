@@ -22,6 +22,7 @@
         <module>services/reorder-service</module>
         <module>services/notification-service</module>
         <module>libs/events</module>
+        <module>libs/outbox</module>
     </modules>
 
     <dependencyManagement>
@@ -36,6 +37,11 @@
             <dependency>
                 <groupId>${project.groupId}</groupId>
                 <artifactId>events</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>${project.groupId}</groupId>
+                <artifactId>outbox</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
