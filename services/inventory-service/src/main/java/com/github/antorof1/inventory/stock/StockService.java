@@ -3,22 +3,22 @@ package com.github.antorof1.inventory.stock;
 import com.fasterxml.uuid.Generators;
 import com.github.antorof1.events.MovementReason;
 import com.github.antorof1.events.StockLevelEvent;
-import org.springframework.context.ApplicationEventPublisher;
+import com.github.antorof1.events.Topics;
+import com.github.antorof1.outbox.OutboxEventService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
-import java.util.UUID;
 
 @Service
 @Transactional(readOnly = true)
 public class StockService {
     private final StockRepository stockRepository;
-    private final ApplicationEventPublisher publisher;
+    private final OutboxEventService outboxEventService;
 
-    public StockService(StockRepository stockRepository, ApplicationEventPublisher publisher) {
+    public StockService(StockRepository stockRepository, OutboxEventService outboxEventService) {
         this.stockRepository = stockRepository;
-        this.publisher = publisher;
+        this.outboxEventService = outboxEventService;
     }
 
     @Transactional
@@ -36,6 +36,6 @@ public class StockService {
             reason,
             occurredAt
         );
-        publisher.publishEvent(event);
+        outboxEventService.record(event.id(), Topics.STOCK_LEVEL_EVENTS, event.sku(), event);
     }
 }
