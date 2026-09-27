@@ -1,11 +1,17 @@
 package com.github.antorof1.outbox;
 
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.AutoConfigurationPackage;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.data.jpa.autoconfigure.DataJpaRepositoriesAutoConfiguration;
+import org.springframework.boot.flyway.autoconfigure.FlywayAutoConfiguration;
+import org.springframework.boot.flyway.autoconfigure.FlywayMigrationInitializer;
 import org.springframework.boot.hibernate.autoconfigure.HibernateJpaAutoConfiguration;
+import org.springframework.boot.jdbc.autoconfigure.DataSourceAutoConfiguration;
+import org.springframework.boot.jpa.autoconfigure.EntityManagerFactoryDependsOnPostProcessor;
 import org.springframework.boot.kafka.autoconfigure.KafkaAutoConfiguration;
 import org.springframework.boot.kafka.autoconfigure.KafkaProperties;
 import org.springframework.context.annotation.Bean;
@@ -15,9 +21,11 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.SchedulingConfigurer;
 import tools.jackson.databind.ObjectMapper;
 
+import javax.sql.DataSource;
+
 @AutoConfiguration(
     before = {HibernateJpaAutoConfiguration.class, DataJpaRepositoriesAutoConfiguration.class},
-    after = KafkaAutoConfiguration.class
+    after = {KafkaAutoConfiguration.class, DataSourceAutoConfiguration.class, FlywayAutoConfiguration.class}
 )
 @AutoConfigurationPackage(basePackageClasses = OutboxEvent.class)
 @EnableConfigurationProperties(OutboxProperties.class)
@@ -26,6 +34,23 @@ public class OutboxAutoConfiguration {
     OutboxEventService outboxEventService(OutboxEventRepository outboxEventRepository, ObjectMapper objectMapper,
                                           KafkaProperties kafkaProperties) {
         return new OutboxEventService(outboxEventRepository, objectMapper, kafkaProperties);
+    }
+
+    @Configuration(proxyBeanMethods = false)
+    @ConditionalOnBean(DataSource.class)
+    @ConditionalOnProperty(prefix = "app.outbox", name = "schema-migration", matchIfMissing = true)
+    static class SchemaMigrationConfiguration {
+        @Bean
+        OutboxSchemaMigration outboxSchemaMigration(DataSource dataSource,
+                                                    ObjectProvider<FlywayMigrationInitializer> serviceMigrations) {
+            serviceMigrations.ifAvailable(initializer -> {});
+            return new OutboxSchemaMigration(dataSource);
+        }
+
+        @Bean
+        static EntityManagerFactoryDependsOnPostProcessor outboxSchemaMigrationBeforeJpa() {
+            return new EntityManagerFactoryDependsOnPostProcessor(OutboxSchemaMigration.class);
+        }
     }
 
     @Configuration(proxyBeanMethods = false)

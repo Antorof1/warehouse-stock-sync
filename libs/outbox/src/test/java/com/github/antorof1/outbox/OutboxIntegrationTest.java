@@ -14,7 +14,6 @@ import java.lang.annotation.Target;
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
 @SpringBootTest(classes = OutboxTestApplication.class, properties = {
-    "spring.flyway.locations=classpath:db/outbox-test",
     "spring.kafka.producer.properties[spring.json.type.mapping]=" + OutboxUtils.TYPE_MAPPING
 })
 @Import(TestcontainersConfiguration.class)

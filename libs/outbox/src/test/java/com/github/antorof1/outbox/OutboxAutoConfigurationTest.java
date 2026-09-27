@@ -7,6 +7,7 @@ import org.springframework.boot.kafka.autoconfigure.KafkaAutoConfiguration;
 import org.springframework.boot.test.context.runner.ApplicationContextRunner;
 import org.springframework.scheduling.annotation.SchedulingConfigurer;
 
+import javax.sql.DataSource;
 import java.time.Duration;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -35,6 +36,19 @@ class OutboxAutoConfigurationTest {
             .doesNotHaveBean(OutboxPublisher.class)
             .doesNotHaveBean(OutboxSweeper.class)
             .doesNotHaveBean(SchedulingConfigurer.class));
+    }
+
+    @Test
+    void skipsSchemaMigrationWithoutDataSource() {
+        contextRunner.run(context -> assertThat(context).doesNotHaveBean(OutboxSchemaMigration.class));
+    }
+
+    @Test
+    void skipsSchemaMigrationWhenServiceOptsOut() {
+        contextRunner
+            .withBean(DataSource.class, () -> mock(DataSource.class))
+            .withPropertyValues("app.outbox.schema-migration=false")
+            .run(context -> assertThat(context).doesNotHaveBean(OutboxSchemaMigration.class));
     }
 
     @Test
