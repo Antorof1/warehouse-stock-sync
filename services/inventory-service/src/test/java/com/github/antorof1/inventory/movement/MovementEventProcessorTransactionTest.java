@@ -71,7 +71,7 @@ class MovementEventProcessorTransactionTest {
                 .isFalse();
             assertThat(stockRepository.findById(stockId(sku))).isEmpty();
             assertThat(consumer.findRecordFor(sku, QUIET_WINDOW))
-                .as("the publisher only fires after commit, so a rolled back movement stays off the topic")
+                .as("the outbox row rolls back with the stock write, so a failed movement stays off the topic")
                 .isEmpty();
         }
     }

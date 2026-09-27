@@ -2,6 +2,8 @@ package com.github.antorof1.inventory.stock;
 
 import com.github.antorof1.events.MovementReason;
 import com.github.antorof1.events.StockLevelEvent;
+import com.github.antorof1.events.Topics;
+import com.github.antorof1.outbox.OutboxEventService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -10,7 +12,6 @@ import org.mockito.InOrder;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.dao.DataIntegrityViolationException;
 
 import java.util.UUID;
@@ -23,6 +24,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.verify;
@@ -36,7 +38,7 @@ class StockServiceTest {
     private StockRepository stockRepository;
 
     @Mock
-    private ApplicationEventPublisher publisher;
+    private OutboxEventService outboxEventService;
 
     @InjectMocks
     private StockService stockService;
@@ -54,7 +56,7 @@ class StockServiceTest {
     }
 
     @Test
-    void publishesAnEventDescribingTheTransition() {
+    void recordsAnEventDescribingTheTransition() {
         givenResultingQuantity(6);
 
         applyMovement(-4, MovementReason.PICK);
@@ -104,25 +106,35 @@ class StockServiceTest {
     }
 
     @Test
-    void writesBeforeItPublishes() {
+    void recordsTheEventUnderItsOwnIdOnTheStockLevelTopicKeyedBySku() {
         givenResultingQuantity(7);
 
         applyMovement(7, MovementReason.RECEIPT);
 
-        InOrder inOrder = inOrder(stockRepository, publisher);
-        inOrder.verify(stockRepository).applyDelta(anyString(), anyString(), anyInt());
-        inOrder.verify(publisher).publishEvent(any(StockLevelEvent.class));
+        StockLevelEvent event = capturedEvent();
+        verify(outboxEventService).record(event.id(), Topics.STOCK_LEVEL_EVENTS, SKU, event);
     }
 
     @Test
-    void publishesNothingWhenPersistingFails() {
+    void writesBeforeItRecords() {
+        givenResultingQuantity(7);
+
+        applyMovement(7, MovementReason.RECEIPT);
+
+        InOrder inOrder = inOrder(stockRepository, outboxEventService);
+        inOrder.verify(stockRepository).applyDelta(anyString(), anyString(), anyInt());
+        inOrder.verify(outboxEventService).record(any(), anyString(), anyString(), any(StockLevelEvent.class));
+    }
+
+    @Test
+    void recordsNothingWhenPersistingFails() {
         given(stockRepository.applyDelta(anyString(), anyString(), anyInt()))
             .willThrow(new DataIntegrityViolationException("sku too long"));
 
         assertThatThrownBy(() -> applyMovement(7, MovementReason.RECEIPT))
             .isInstanceOf(DataIntegrityViolationException.class);
 
-        verifyNoInteractions(publisher);
+        verifyNoInteractions(outboxEventService);
     }
 
     private void applyMovement(int quantityDelta, MovementReason reason) {
@@ -134,7 +146,7 @@ class StockServiceTest {
     }
 
     private StockLevelEvent capturedEvent() {
-        verify(publisher).publishEvent(eventCaptor.capture());
+        verify(outboxEventService).record(any(), eq(Topics.STOCK_LEVEL_EVENTS), anyString(), eventCaptor.capture());
 
         return eventCaptor.getValue();
     }

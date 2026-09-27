@@ -17,6 +17,7 @@ import org.springframework.kafka.config.KafkaListenerEndpointRegistry;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.listener.MessageListenerContainer;
 import org.testcontainers.kafka.KafkaContainer;
+import tools.jackson.databind.ObjectMapper;
 
 import java.time.Duration;
 import java.util.List;
@@ -32,7 +33,10 @@ class MovementConsumerIntegrationTest {
     private static final Duration QUIET_WINDOW = Duration.ofSeconds(5);
 
     @Autowired
-    private KafkaTemplate<String, Object> kafkaTemplate;
+    private KafkaTemplate<String, String> kafkaTemplate;
+
+    @Autowired
+    private ObjectMapper objectMapper;
 
     @Autowired
     private KafkaListenerEndpointRegistry listenerRegistry;
@@ -50,7 +54,7 @@ class MovementConsumerIntegrationTest {
 
     @BeforeEach
     void awaitListenerAssignment() {
-        producer = new MovementEventProducer(kafkaTemplate);
+        producer = new MovementEventProducer(kafkaTemplate, objectMapper);
 
         await().atMost(Duration.ofSeconds(30)).until(() -> listenerRegistry.getListenerContainers().stream()
             .map(MessageListenerContainer::getAssignedPartitions)
