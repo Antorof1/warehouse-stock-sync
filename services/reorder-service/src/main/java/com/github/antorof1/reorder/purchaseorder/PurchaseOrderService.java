@@ -1,9 +1,10 @@
 package com.github.antorof1.reorder.purchaseorder;
 
 import com.fasterxml.uuid.Generators;
+import com.github.antorof1.events.Topics;
 import com.github.antorof1.events.purchaseorder.PurchaseOrderExpiredEvent;
+import com.github.antorof1.outbox.OutboxEventService;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -14,14 +15,14 @@ import java.time.Instant;
 public class PurchaseOrderService {
     private final PurchaseOrderRepository purchaseOrderRepository;
     private final Duration purchaseOrderTTL;
-    private final ApplicationEventPublisher publisher;
+    private final OutboxEventService outboxEventService;
 
     public PurchaseOrderService(PurchaseOrderRepository purchaseOrderRepository,
                                 @Value("${app.purchase-orders.ttl}") Duration purchaseOrderTTL,
-                                ApplicationEventPublisher publisher) {
+                                OutboxEventService outboxEventService) {
         this.purchaseOrderRepository = purchaseOrderRepository;
         this.purchaseOrderTTL = purchaseOrderTTL;
-        this.publisher = publisher;
+        this.outboxEventService = outboxEventService;
     }
 
     @Transactional
@@ -40,7 +41,12 @@ public class PurchaseOrderService {
                     now
                 );
 
-                publisher.publishEvent(expiredEvent);
+                outboxEventService.record(
+                    expiredEvent.id(),
+                    Topics.PURCHASE_ORDER_EVENTS,
+                    expiredEvent.sku(),
+                    expiredEvent
+                );
             });
     }
 }

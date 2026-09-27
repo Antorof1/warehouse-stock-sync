@@ -2,9 +2,11 @@ package com.github.antorof1.reorder.stock;
 
 import com.fasterxml.uuid.Generators;
 import com.github.antorof1.events.MovementReason;
+import com.github.antorof1.events.Topics;
 import com.github.antorof1.events.purchaseorder.PurchaseOrderCompletedEvent;
 import com.github.antorof1.events.purchaseorder.PurchaseOrderPlacedEvent;
 import com.github.antorof1.events.StockLevelEvent;
+import com.github.antorof1.outbox.OutboxEventService;
 import com.github.antorof1.reorder.idempotency.ProcessedEventService;
 import com.github.antorof1.reorder.purchaseorder.PurchaseOrder;
 import com.github.antorof1.reorder.purchaseorder.PurchaseOrderRepository;
@@ -14,7 +16,6 @@ import com.github.antorof1.reorder.rule.ReorderRuleId;
 import com.github.antorof1.reorder.rule.ReorderRuleRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -28,16 +29,16 @@ public class StockLevelEventProcessor {
     private final ReorderRuleRepository reorderRuleRepository;
     private final PurchaseOrderRepository purchaseOrderRepository;
     private final ProcessedEventService processedEventService;
-    private final ApplicationEventPublisher publisher;
+    private final OutboxEventService outboxEventService;
 
     public StockLevelEventProcessor(ReorderRuleRepository reorderRuleRepository,
                                     PurchaseOrderRepository purchaseOrderRepository,
                                     ProcessedEventService processedEventService,
-                                    ApplicationEventPublisher publisher) {
+                                    OutboxEventService outboxEventService) {
         this.reorderRuleRepository = reorderRuleRepository;
         this.purchaseOrderRepository = purchaseOrderRepository;
         this.processedEventService = processedEventService;
-        this.publisher = publisher;
+        this.outboxEventService = outboxEventService;
     }
 
     @Transactional
@@ -73,7 +74,12 @@ public class StockLevelEventProcessor {
                 Instant.now()
             );
 
-            publisher.publishEvent(completedEvent);
+            outboxEventService.record(
+                completedEvent.id(),
+                Topics.PURCHASE_ORDER_EVENTS,
+                completedEvent.sku(),
+                completedEvent
+            );
         }
 
         int quantity = rule.quantityToOrder(event.newLevel());
@@ -88,7 +94,12 @@ public class StockLevelEventProcessor {
                 Instant.now()
             );
 
-            publisher.publishEvent(placedEvent);
+            outboxEventService.record(
+                placedEvent.id(),
+                Topics.PURCHASE_ORDER_EVENTS,
+                placedEvent.sku(),
+                placedEvent
+            );
         }
     }
 }
