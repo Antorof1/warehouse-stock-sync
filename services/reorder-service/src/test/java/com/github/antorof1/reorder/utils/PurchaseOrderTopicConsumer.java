@@ -15,6 +15,7 @@ import org.springframework.kafka.test.utils.KafkaTestUtils;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -29,6 +30,7 @@ public final class PurchaseOrderTopicConsumer<V> implements AutoCloseable {
     private static final Duration AWAIT_TIMEOUT = Duration.ofSeconds(20);
 
     private final Consumer<String, V> consumer;
+    private final List<ConsumerRecord<String, V>> buffered = new ArrayList<>();
 
     private PurchaseOrderTopicConsumer(Consumer<String, V> consumer) {
         this.consumer = consumer;
@@ -76,13 +78,11 @@ public final class PurchaseOrderTopicConsumer<V> implements AutoCloseable {
         List<ConsumerRecord<String, V>> matches = new ArrayList<>();
         Instant deadline = Instant.now().plus(AWAIT_TIMEOUT);
 
-        while (Instant.now().isBefore(deadline)) {
-            for (ConsumerRecord<String, V> record : consumer.poll(POLL_INTERVAL)) {
-                if (!sku.equals(record.key())) continue;
-
-                matches.add(record);
-                if (matches.size() == count) return matches;
-            }
+        while (true) {
+            matches.addAll(take(sku, count - matches.size()));
+            if (matches.size() == count) return matches;
+            if (!Instant.now().isBefore(deadline)) break;
+            poll();
         }
 
         throw new AssertionError(
@@ -93,28 +93,41 @@ public final class PurchaseOrderTopicConsumer<V> implements AutoCloseable {
     public Optional<ConsumerRecord<String, V>> findRecordFor(String sku, Duration within) {
         Instant deadline = Instant.now().plus(within);
 
-        while (Instant.now().isBefore(deadline)) {
-            for (ConsumerRecord<String, V> record : consumer.poll(POLL_INTERVAL)) {
-                if (sku.equals(record.key())) return Optional.of(record);
-            }
+        while (true) {
+            List<ConsumerRecord<String, V>> match = take(sku, 1);
+            if (!match.isEmpty()) return Optional.of(match.getFirst());
+            if (!Instant.now().isBefore(deadline)) return Optional.empty();
+            poll();
         }
-
-        return Optional.empty();
     }
 
     public List<ConsumerRecord<String, V>> collectRecordsFor(String sku, Duration within) {
-        List<ConsumerRecord<String, V>> matches = new ArrayList<>();
         Instant deadline = Instant.now().plus(within);
 
         while (Instant.now().isBefore(deadline)) {
-            for (ConsumerRecord<String, V> record : consumer.poll(POLL_INTERVAL)) {
-                if (!sku.equals(record.key())) continue;
-
-                matches.add(record);
-            }
+            poll();
         }
 
-        return matches;
+        return take(sku, Integer.MAX_VALUE);
+    }
+
+    private void poll() {
+        consumer.poll(POLL_INTERVAL).forEach(buffered::add);
+    }
+
+    private List<ConsumerRecord<String, V>> take(String sku, int max) {
+        List<ConsumerRecord<String, V>> taken = new ArrayList<>();
+        Iterator<ConsumerRecord<String, V>> records = buffered.iterator();
+
+        while (records.hasNext() && taken.size() < max) {
+            ConsumerRecord<String, V> record = records.next();
+            if (!sku.equals(record.key())) continue;
+
+            taken.add(record);
+            records.remove();
+        }
+
+        return taken;
     }
 
     @Override

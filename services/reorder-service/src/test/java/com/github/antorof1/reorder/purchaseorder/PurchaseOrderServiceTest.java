@@ -1,13 +1,14 @@
 package com.github.antorof1.reorder.purchaseorder;
 
 import com.github.antorof1.events.purchaseorder.PurchaseOrderExpiredEvent;
+import com.github.antorof1.outbox.OutboxEventRepository;
 import com.github.antorof1.reorder.IntegrationTest;
+import com.github.antorof1.reorder.utils.RecordedOutboxEvents;
 import com.github.antorof1.reorder.utils.ReorderUtils;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.test.context.event.ApplicationEvents;
-import org.springframework.test.context.event.RecordApplicationEvents;
+import tools.jackson.databind.ObjectMapper;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -19,7 +20,6 @@ import static com.github.antorof1.reorder.utils.ReorderUtils.ageOrder;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @IntegrationTest
-@RecordApplicationEvents
 class PurchaseOrderServiceTest {
     @Autowired
     private PurchaseOrderService purchaseOrderService;
@@ -31,7 +31,10 @@ class PurchaseOrderServiceTest {
     private JdbcTemplate jdbcTemplate;
 
     @Autowired
-    private ApplicationEvents applicationEvents;
+    private OutboxEventRepository outboxEventRepository;
+
+    @Autowired
+    private ObjectMapper objectMapper;
 
     @Test
     void expiresAnOpenOrderOlderThanTheTtl() {
@@ -44,7 +47,7 @@ class PurchaseOrderServiceTest {
     }
 
     @Test
-    void publishesAnExpiredEventWithWhatWasReceived() {
+    void recordsAnExpiredEventWithWhatWasReceived() {
         String sku = ReorderUtils.uniqueSku();
         PurchaseOrder order = new PurchaseOrder(sku, WAREHOUSE_ID, 40);
         order.receive(15);
@@ -112,8 +115,7 @@ class PurchaseOrderServiceTest {
     }
 
     private List<PurchaseOrderExpiredEvent> expiredEventsFor(String sku) {
-        return applicationEvents.stream(PurchaseOrderExpiredEvent.class)
-            .filter(event -> event.sku().equals(sku))
-            .toList();
+        return new RecordedOutboxEvents(outboxEventRepository, objectMapper)
+            .purchaseOrderEventsFor(sku, PurchaseOrderExpiredEvent.class);
     }
 }

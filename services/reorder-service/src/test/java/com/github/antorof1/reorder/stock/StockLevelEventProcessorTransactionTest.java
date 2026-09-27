@@ -2,6 +2,7 @@ package com.github.antorof1.reorder.stock;
 
 import com.github.antorof1.events.MovementReason;
 import com.github.antorof1.events.StockLevelEvent;
+import com.github.antorof1.outbox.OutboxEventRepository;
 import com.github.antorof1.reorder.IntegrationTest;
 import com.github.antorof1.reorder.idempotency.ProcessedEventRepository;
 import com.github.antorof1.reorder.purchaseorder.PurchaseOrder;
@@ -9,12 +10,14 @@ import com.github.antorof1.reorder.purchaseorder.PurchaseOrderRepository;
 import com.github.antorof1.reorder.purchaseorder.PurchaseOrderStatus;
 import com.github.antorof1.reorder.rule.ReorderRuleRepository;
 import com.github.antorof1.reorder.utils.PurchaseOrderTopicConsumer;
+import com.github.antorof1.reorder.utils.RecordedOutboxEvents;
 import com.github.antorof1.reorder.utils.ReorderUtils;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.testcontainers.kafka.KafkaContainer;
+import tools.jackson.databind.ObjectMapper;
 
 import java.time.Duration;
 
@@ -38,6 +41,12 @@ class StockLevelEventProcessorTransactionTest {
 
     @Autowired
     private ProcessedEventRepository processedEventRepository;
+
+    @Autowired
+    private OutboxEventRepository outboxEventRepository;
+
+    @Autowired
+    private ObjectMapper objectMapper;
 
     @Autowired
     private KafkaContainer kafkaContainer;
@@ -75,8 +84,11 @@ class StockLevelEventProcessorTransactionTest {
                 .isFalse();
             assertThat(purchaseOrderRepository.findBySkuAndWarehouseIdAndStatus(sku, WAREHOUSE_ID, PurchaseOrderStatus.OPEN))
                 .isEmpty();
+            assertThat(new RecordedOutboxEvents(outboxEventRepository, objectMapper).purchaseOrderRowsFor(sku))
+                .as("the outbox row rolls back with the failed order")
+                .isEmpty();
             assertThat(consumer.findRecordFor(sku, QUIET_WINDOW))
-                .as("the publisher only fires after commit, so a rolled back order stays off the topic")
+                .as("nothing was recorded, so a rolled back order stays off the topic")
                 .isEmpty();
         }
     }

@@ -4,17 +4,18 @@ import com.github.antorof1.events.MovementReason;
 import com.github.antorof1.events.StockLevelEvent;
 import com.github.antorof1.events.purchaseorder.PurchaseOrderCompletedEvent;
 import com.github.antorof1.events.purchaseorder.PurchaseOrderPlacedEvent;
+import com.github.antorof1.outbox.OutboxEventRepository;
 import com.github.antorof1.reorder.IntegrationTest;
 import com.github.antorof1.reorder.idempotency.ProcessedEventRepository;
 import com.github.antorof1.reorder.purchaseorder.PurchaseOrder;
 import com.github.antorof1.reorder.purchaseorder.PurchaseOrderRepository;
 import com.github.antorof1.reorder.purchaseorder.PurchaseOrderStatus;
 import com.github.antorof1.reorder.rule.ReorderRuleRepository;
+import com.github.antorof1.reorder.utils.RecordedOutboxEvents;
 import com.github.antorof1.reorder.utils.ReorderUtils;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.test.context.event.ApplicationEvents;
-import org.springframework.test.context.event.RecordApplicationEvents;
+import tools.jackson.databind.ObjectMapper;
 
 import java.util.Comparator;
 import java.util.List;
@@ -25,7 +26,6 @@ import static com.github.antorof1.reorder.utils.ReorderUtils.stockLevelEvent;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @IntegrationTest
-@RecordApplicationEvents
 class StockLevelEventProcessorTest {
     @Autowired
     private StockLevelEventProcessor processor;
@@ -40,7 +40,10 @@ class StockLevelEventProcessorTest {
     private ProcessedEventRepository processedEventRepository;
 
     @Autowired
-    private ApplicationEvents applicationEvents;
+    private OutboxEventRepository outboxEventRepository;
+
+    @Autowired
+    private ObjectMapper objectMapper;
 
     @Test
     void ignoresASkuWithoutARule() {
@@ -208,14 +211,14 @@ class StockLevelEventProcessorTest {
     }
 
     private List<PurchaseOrderPlacedEvent> placedEventsFor(String sku) {
-        return applicationEvents.stream(PurchaseOrderPlacedEvent.class)
-            .filter(event -> event.sku().equals(sku))
-            .toList();
+        return recordedEvents().purchaseOrderEventsFor(sku, PurchaseOrderPlacedEvent.class);
     }
 
     private List<PurchaseOrderCompletedEvent> completedEventsFor(String sku) {
-        return applicationEvents.stream(PurchaseOrderCompletedEvent.class)
-            .filter(event -> event.sku().equals(sku))
-            .toList();
+        return recordedEvents().purchaseOrderEventsFor(sku, PurchaseOrderCompletedEvent.class);
+    }
+
+    private RecordedOutboxEvents recordedEvents() {
+        return new RecordedOutboxEvents(outboxEventRepository, objectMapper);
     }
 }
