@@ -4,6 +4,7 @@ WORKDIR /app
 COPY .mvn/ .mvn/
 COPY mvnw pom.xml ./
 COPY libs/events/pom.xml libs/events/
+COPY libs/idempotency/pom.xml libs/idempotency/
 COPY libs/outbox/pom.xml libs/outbox/
 COPY services/warehouse-service/pom.xml services/warehouse-service/
 COPY services/inventory-service/pom.xml services/inventory-service/
