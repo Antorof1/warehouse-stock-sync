@@ -1,5 +1,6 @@
 package com.github.antorof1.outbox;
 
+import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.errors.RetriableException;
 import org.slf4j.Logger;
@@ -26,6 +27,7 @@ public class OutboxPublisher {
         this.batchSize = outboxProperties.batchSize();
     }
 
+    @SchedulerLock(name = "outbox-publisher")
     public void poll() {
         List<OutboxEvent> batch = outboxEventRepository.findPending(batchSize);
         if (batch.isEmpty()) return;
