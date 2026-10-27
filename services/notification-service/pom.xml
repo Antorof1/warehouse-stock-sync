@@ -21,6 +21,10 @@
             <groupId>com.github.antorof1</groupId>
             <artifactId>idempotency</artifactId>
         </dependency>
+        <dependency>
+            <groupId>com.github.antorof1</groupId>
+            <artifactId>kafka-retry</artifactId>
+        </dependency>
 
         <dependency>
             <groupId>org.springframework.boot</groupId>
