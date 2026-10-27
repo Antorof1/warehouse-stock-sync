@@ -5,6 +5,7 @@ COPY .mvn/ .mvn/
 COPY mvnw pom.xml ./
 COPY libs/events/pom.xml libs/events/
 COPY libs/idempotency/pom.xml libs/idempotency/
+COPY libs/kafka-retry/pom.xml libs/kafka-retry/
 COPY libs/outbox/pom.xml libs/outbox/
 COPY services/warehouse-service/pom.xml services/warehouse-service/
 COPY services/inventory-service/pom.xml services/inventory-service/
@@ -14,6 +15,7 @@ RUN ./mvnw -B -pl services/reorder-service -am dependency:go-offline
 
 COPY libs/events/src libs/events/src
 COPY libs/idempotency/src libs/idempotency/src
+COPY libs/kafka-retry/src libs/kafka-retry/src
 COPY libs/outbox/src libs/outbox/src
 COPY services/reorder-service/src services/reorder-service/src
 RUN ./mvnw -B -pl services/reorder-service -am clean package -DskipTests \
