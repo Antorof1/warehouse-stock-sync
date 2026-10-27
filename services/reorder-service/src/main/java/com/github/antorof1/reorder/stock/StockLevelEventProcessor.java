@@ -2,12 +2,12 @@ package com.github.antorof1.reorder.stock;
 
 import com.fasterxml.uuid.Generators;
 import com.github.antorof1.events.MovementReason;
+import com.github.antorof1.events.StockLevelEvent;
 import com.github.antorof1.events.Topics;
 import com.github.antorof1.events.purchaseorder.PurchaseOrderCompletedEvent;
 import com.github.antorof1.events.purchaseorder.PurchaseOrderPlacedEvent;
-import com.github.antorof1.events.StockLevelEvent;
+import com.github.antorof1.idempotency.ProcessedEventService;
 import com.github.antorof1.outbox.OutboxEventService;
-import com.github.antorof1.reorder.idempotency.ProcessedEventService;
 import com.github.antorof1.reorder.purchaseorder.PurchaseOrder;
 import com.github.antorof1.reorder.purchaseorder.PurchaseOrderRepository;
 import com.github.antorof1.reorder.purchaseorder.PurchaseOrderStatus;
@@ -43,7 +43,7 @@ public class StockLevelEventProcessor {
 
     @Transactional
     public void process(StockLevelEvent event) {
-        if (!processedEventService.tryMarkProcessed(event.id())) return;
+        if (!processedEventService.tryMarkProcessed(event.id(), Topics.STOCK_LEVEL_EVENTS)) return;
 
         ReorderRuleId ruleId = new ReorderRuleId(event.sku(), event.warehouseId());
         reorderRuleRepository.findAndLockById(ruleId).ifPresentOrElse(

@@ -2,9 +2,11 @@ package com.github.antorof1.reorder.stock;
 
 import com.github.antorof1.events.MovementReason;
 import com.github.antorof1.events.StockLevelEvent;
+import com.github.antorof1.events.Topics;
+import com.github.antorof1.idempotency.ProcessedEventId;
+import com.github.antorof1.idempotency.ProcessedEventRepository;
 import com.github.antorof1.outbox.OutboxEventRepository;
 import com.github.antorof1.reorder.IntegrationTest;
-import com.github.antorof1.reorder.idempotency.ProcessedEventRepository;
 import com.github.antorof1.reorder.purchaseorder.PurchaseOrder;
 import com.github.antorof1.reorder.purchaseorder.PurchaseOrderRepository;
 import com.github.antorof1.reorder.purchaseorder.PurchaseOrderStatus;
@@ -64,7 +66,7 @@ class StockLevelEventProcessorTransactionTest {
 
         assertThat(purchaseOrderRepository.findBySkuAndWarehouseIdAndStatus(sku, WAREHOUSE_ID, PurchaseOrderStatus.OPEN))
             .isPresent();
-        assertThat(processedEventRepository.existsById(event.id())).isTrue();
+        assertThat(processedEventRepository.existsById(new ProcessedEventId(event.id(), Topics.STOCK_LEVEL_EVENTS))).isTrue();
     }
 
     @Test
@@ -79,7 +81,7 @@ class StockLevelEventProcessorTransactionTest {
             assertThatThrownBy(() -> processor.process(event))
                 .isInstanceOf(DataIntegrityViolationException.class);
 
-            assertThat(processedEventRepository.existsById(event.id()))
+            assertThat(processedEventRepository.existsById(new ProcessedEventId(event.id(), Topics.STOCK_LEVEL_EVENTS)))
                 .as("the marker is claimed up front, so it must roll back with the failed order")
                 .isFalse();
             assertThat(purchaseOrderRepository.findBySkuAndWarehouseIdAndStatus(sku, WAREHOUSE_ID, PurchaseOrderStatus.OPEN))

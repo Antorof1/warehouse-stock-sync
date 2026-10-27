@@ -2,9 +2,11 @@ package com.github.antorof1.reorder.stock;
 
 import com.github.antorof1.events.MovementReason;
 import com.github.antorof1.events.StockLevelEvent;
+import com.github.antorof1.events.Topics;
 import com.github.antorof1.events.purchaseorder.PurchaseOrderPlacedEvent;
+import com.github.antorof1.idempotency.ProcessedEventId;
+import com.github.antorof1.idempotency.ProcessedEventRepository;
 import com.github.antorof1.reorder.IntegrationTest;
-import com.github.antorof1.reorder.idempotency.ProcessedEventRepository;
 import com.github.antorof1.reorder.purchaseorder.PurchaseOrder;
 import com.github.antorof1.reorder.purchaseorder.PurchaseOrderRepository;
 import com.github.antorof1.reorder.purchaseorder.PurchaseOrderStatus;
@@ -77,7 +79,7 @@ class StockLevelConsumerIntegrationTest {
 
         PurchaseOrder order = awaitOpenOrder(sku);
         assertThat(order.getQuantity()).isEqualTo(42);
-        assertThat(processedEventRepository.existsById(event.id())).isTrue();
+        assertThat(processedEventRepository.existsById(new ProcessedEventId(event.id(), Topics.STOCK_LEVEL_EVENTS))).isTrue();
     }
 
     @Test

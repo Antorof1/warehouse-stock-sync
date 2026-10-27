@@ -2,11 +2,13 @@ package com.github.antorof1.reorder.stock;
 
 import com.github.antorof1.events.MovementReason;
 import com.github.antorof1.events.StockLevelEvent;
+import com.github.antorof1.events.Topics;
 import com.github.antorof1.events.purchaseorder.PurchaseOrderCompletedEvent;
 import com.github.antorof1.events.purchaseorder.PurchaseOrderPlacedEvent;
+import com.github.antorof1.idempotency.ProcessedEventId;
+import com.github.antorof1.idempotency.ProcessedEventRepository;
 import com.github.antorof1.outbox.OutboxEventRepository;
 import com.github.antorof1.reorder.IntegrationTest;
-import com.github.antorof1.reorder.idempotency.ProcessedEventRepository;
 import com.github.antorof1.reorder.purchaseorder.PurchaseOrder;
 import com.github.antorof1.reorder.purchaseorder.PurchaseOrderRepository;
 import com.github.antorof1.reorder.purchaseorder.PurchaseOrderStatus;
@@ -54,7 +56,7 @@ class StockLevelEventProcessorTest {
 
         assertThat(ordersFor(sku)).isEmpty();
         assertThat(placedEventsFor(sku)).isEmpty();
-        assertThat(processedEventRepository.existsById(event.id()))
+        assertThat(processedEventRepository.existsById(new ProcessedEventId(event.id(), Topics.STOCK_LEVEL_EVENTS)))
             .as("the event is claimed even when no rule applies")
             .isTrue();
     }

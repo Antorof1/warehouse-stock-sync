@@ -18,7 +18,3 @@ CREATE TABLE purchase_orders (
 
 CREATE UNIQUE INDEX uq_purchase_orders_open_per_sku_warehouse
     ON purchase_orders (sku, warehouse_id) WHERE status = 'OPEN';
-
-CREATE TABLE processed_events (
-    id UUID PRIMARY KEY
-);
