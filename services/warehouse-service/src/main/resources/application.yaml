@@ -9,8 +9,30 @@ spring:
     password: ${WAREHOUSE_DB_PASSWORD}
   kafka:
     bootstrap-servers: localhost:29092
+    listener:
+      observation-enabled: true
+    template:
+      observation-enabled: true
     producer:
       value-serializer: org.apache.kafka.common.serialization.StringSerializer
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, info, prometheus
+  endpoint:
+    health:
+      probes:
+        enabled: true
+  metrics:
+    tags:
+      application: ${spring.application.name}
+    distribution:
+      percentiles-histogram:
+        http.server.requests: true
+        spring.kafka.listener: true
+        spring.kafka.template: true
 
 app:
   kafka:
