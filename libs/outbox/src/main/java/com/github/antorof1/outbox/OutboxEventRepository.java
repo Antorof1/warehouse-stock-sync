@@ -1,5 +1,6 @@
 package com.github.antorof1.outbox;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -19,6 +20,18 @@ public interface OutboxEventRepository extends JpaRepository<OutboxEvent, UUID> 
         LIMIT :limit
         """, nativeQuery = true)
     List<OutboxEvent> findPending(@Param("limit") int limit);
+
+    @Transactional(readOnly = true)
+    @Query(value = "SELECT count(*) FROM outbox_events WHERE published_at IS NULL", nativeQuery = true)
+    long countPending();
+
+    @Transactional(readOnly = true)
+    @Query(value = """
+        SELECT EXTRACT(EPOCH FROM now() - min(created_at))
+        FROM outbox_events
+        WHERE published_at IS NULL
+        """, nativeQuery = true)
+    @Nullable Double oldestPendingAgeSeconds();
 
     @Modifying
     @Transactional

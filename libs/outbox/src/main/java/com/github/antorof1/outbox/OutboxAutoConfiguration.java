@@ -1,5 +1,7 @@
 package com.github.antorof1.outbox;
 
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Metrics;
 import net.javacrumbs.shedlock.core.LockProvider;
 import net.javacrumbs.shedlock.provider.jdbctemplate.JdbcTemplateLockProvider;
 import net.javacrumbs.shedlock.spring.annotation.EnableSchedulerLock;
@@ -41,6 +43,11 @@ public class OutboxAutoConfiguration {
         return new OutboxEventService(outboxEventRepository, objectMapper, kafkaProperties);
     }
 
+    @Bean
+    OutboxMetrics outboxMetrics(OutboxEventRepository outboxEventRepository) {
+        return new OutboxMetrics(outboxEventRepository);
+    }
+
     @Configuration(proxyBeanMethods = false)
     @ConditionalOnBean(DataSource.class)
     @ConditionalOnProperty(prefix = "app.outbox", name = "schema-migration", matchIfMissing = true)
@@ -66,8 +73,12 @@ public class OutboxAutoConfiguration {
         @Bean
         OutboxPublisher outboxPublisher(OutboxEventRepository outboxEventRepository,
                                         KafkaTemplate<String, String> kafkaTemplate,
-                                        OutboxProperties outboxProperties) {
-            return new OutboxPublisher(outboxEventRepository, kafkaTemplate, outboxProperties);
+                                        OutboxProperties outboxProperties,
+                                        ObjectProvider<MeterRegistry> meterRegistry) {
+            return new OutboxPublisher(
+                outboxEventRepository, kafkaTemplate, outboxProperties,
+                meterRegistry.getIfAvailable(() -> Metrics.globalRegistry)
+            );
         }
 
         @Bean
