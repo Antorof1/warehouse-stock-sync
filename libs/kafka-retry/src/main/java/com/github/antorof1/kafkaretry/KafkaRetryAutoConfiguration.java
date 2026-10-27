@@ -1,5 +1,7 @@
 package com.github.antorof1.kafkaretry;
 
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Metrics;
 import org.apache.kafka.common.TopicPartition;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
@@ -35,7 +37,8 @@ public class KafkaRetryAutoConfiguration {
     @Bean
     @ConditionalOnMissingBean(CommonErrorHandler.class)
     DefaultErrorHandler kafkaRetryErrorHandler(DeadLetterTemplate deadLetterTemplate, KafkaProperties kafkaProperties,
-                                               KafkaRetryProperties retryProperties) {
+                                               KafkaRetryProperties retryProperties,
+                                               ObjectProvider<MeterRegistry> meterRegistry) {
         String groupId = kafkaProperties.getConsumer().getGroupId();
         if (groupId == null) {
             throw new IllegalStateException("spring.kafka.consumer.group-id is required to name dead letter topics");
@@ -48,6 +51,9 @@ public class KafkaRetryAutoConfiguration {
 
         DefaultErrorHandler errorHandler = new DefaultErrorHandler(recoverer, backOff(retryProperties));
         retryProperties.notRetryableExceptions().forEach(errorHandler::addNotRetryableExceptions);
+        errorHandler.setRetryListeners(
+            new KafkaRetryMetrics(meterRegistry.getIfAvailable(() -> Metrics.globalRegistry), groupId)
+        );
 
         return errorHandler;
     }
