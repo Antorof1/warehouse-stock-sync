@@ -25,6 +25,7 @@ class OutboxAutoConfigurationTest {
     void recordsAndPublishesByDefault() {
         contextRunner.run(context -> assertThat(context)
             .hasSingleBean(OutboxEventService.class)
+            .hasSingleBean(OutboxMetrics.class)
             .hasSingleBean(OutboxPublisher.class)
             .hasSingleBean(OutboxSweeper.class)
             .hasSingleBean(SchedulingConfigurer.class));
@@ -34,6 +35,7 @@ class OutboxAutoConfigurationTest {
     void keepsRecordingButSchedulesNothingWhenDisabled() {
         contextRunner.withPropertyValues("app.outbox.enabled=false").run(context -> assertThat(context)
             .hasSingleBean(OutboxEventService.class)
+            .hasSingleBean(OutboxMetrics.class)
             .doesNotHaveBean(OutboxPublisher.class)
             .doesNotHaveBean(OutboxSweeper.class)
             .doesNotHaveBean(SchedulingConfigurer.class));

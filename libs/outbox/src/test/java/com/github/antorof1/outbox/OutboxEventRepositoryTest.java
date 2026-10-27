@@ -82,6 +82,25 @@ class OutboxEventRepositoryTest {
         assertThat(exists(entityManager, oldButPending)).as("an unpublished event is never swept").isTrue();
     }
 
+    @Test
+    void countPendingCountsOnlyUnpublishedEvents() {
+        long before = outboxEventRepository.countPending();
+        insert(entityManager, null, NOW);
+        insert(entityManager, null, NOW);
+        insert(entityManager, NOW, NOW);
+
+        assertThat(outboxEventRepository.countPending()).isEqualTo(before + 2);
+    }
+
+    @Test
+    void oldestPendingAgeMeasuresTheOldestUnpublishedEvent() {
+        insert(entityManager, NOW, NOW.minus(Duration.ofDays(2)));
+        insert(entityManager, null, NOW.minus(Duration.ofHours(1)));
+
+        assertThat(outboxEventRepository.oldestPendingAgeSeconds())
+            .isGreaterThanOrEqualTo(Duration.ofHours(1).minusSeconds(5).toSeconds());
+    }
+
     private List<UUID> pendingIds() {
         return outboxEventRepository.findPending(Integer.MAX_VALUE).stream().map(OutboxEvent::getId).toList();
     }

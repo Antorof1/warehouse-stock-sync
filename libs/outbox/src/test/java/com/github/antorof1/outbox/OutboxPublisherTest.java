@@ -1,6 +1,7 @@
 package com.github.antorof1.outbox;
 
 import com.github.antorof1.outbox.utils.OutboxUtils;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.errors.RecordTooLargeException;
 import org.apache.kafka.common.errors.TimeoutException;
@@ -52,12 +53,14 @@ class OutboxPublisherTest {
     @Captor
     private ArgumentCaptor<ProducerRecord<String, String>> recordCaptor;
 
+    private final SimpleMeterRegistry meterRegistry = new SimpleMeterRegistry();
+
     private OutboxPublisher outboxPublisher;
 
     @BeforeEach
     void setUp() {
         outboxPublisher = new OutboxPublisher(
-            outboxEventRepository, kafkaTemplate, OutboxUtils.properties(BATCH_SIZE, Duration.ofDays(7))
+            outboxEventRepository, kafkaTemplate, OutboxUtils.properties(BATCH_SIZE, Duration.ofDays(7)), meterRegistry
         );
     }
 
@@ -157,6 +160,35 @@ class OutboxPublisherTest {
 
         verify(kafkaTemplate, times(1)).send(any(ProducerRecord.class));
         verify(outboxEventRepository, never()).markPublished(anyList());
+    }
+
+    @Test
+    void countsPublishedAndFailedEventsPerTopic() {
+        givenPending(first, second, third);
+        given(kafkaTemplate.send(any(ProducerRecord.class)))
+            .willReturn(succeeded(), failed(), succeeded());
+
+        outboxPublisher.poll();
+
+        assertThat(count(OutboxPublisher.PUBLISHED)).isEqualTo(2);
+        assertThat(count(OutboxPublisher.FAILED)).isEqualTo(1);
+    }
+
+    @Test
+    void countsAnEventThatCanNeverBeSentAsFailed() {
+        givenPending(first, second);
+        given(kafkaTemplate.send(any(ProducerRecord.class)))
+            .willThrow(new KafkaException("too big", new RecordTooLargeException("1 MB")))
+            .willReturn(succeeded());
+
+        outboxPublisher.poll();
+
+        assertThat(count(OutboxPublisher.PUBLISHED)).isEqualTo(1);
+        assertThat(count(OutboxPublisher.FAILED)).isEqualTo(1);
+    }
+
+    private double count(String name) {
+        return meterRegistry.get(name).tag("topic", TOPIC).counter().count();
     }
 
     private void givenPending(OutboxEvent... events) {
