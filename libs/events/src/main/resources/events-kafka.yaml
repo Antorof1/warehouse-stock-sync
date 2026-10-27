@@ -10,5 +10,12 @@ spring:
           reorder.purchase-order.completed:com.github.antorof1.events.purchaseorder.PurchaseOrderCompletedEvent,
           reorder.purchase-order.expired:com.github.antorof1.events.purchaseorder.PurchaseOrderExpiredEvent
     producer:
+      acks: all
       properties:
         spring.json.type.mapping: *types
+        enable.idempotence: true
+        max.in.flight.requests.per.connection: 5
+        retries: 2147483647
+        request.timeout.ms: 30000
+        delivery.timeout.ms: 60000
+        max.block.ms: 10000
