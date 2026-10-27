@@ -122,6 +122,16 @@ services:
     ports:
       - "${NOTIFICATION_PORT:-8084}:8080"
 
+  prometheus:
+    profiles: [ "full" ]
+    image: prom/prometheus:v3.5.0
+    volumes:
+      - ./docker/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    ports:
+      - "${PROMETHEUS_PORT:-9090}:9090"
+
 volumes:
   postgres_data:
   kafka_data:
+  prometheus_data:
