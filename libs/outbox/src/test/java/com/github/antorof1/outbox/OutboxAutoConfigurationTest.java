@@ -6,6 +6,7 @@ import org.springframework.boot.autoconfigure.AutoConfigurations;
 import org.springframework.boot.jackson.autoconfigure.JacksonAutoConfiguration;
 import org.springframework.boot.kafka.autoconfigure.KafkaAutoConfiguration;
 import org.springframework.boot.test.context.runner.ApplicationContextRunner;
+import org.springframework.scheduling.TaskScheduler;
 import org.springframework.scheduling.annotation.SchedulingConfigurer;
 
 import javax.sql.DataSource;
@@ -19,7 +20,8 @@ class OutboxAutoConfigurationTest {
         .withConfiguration(AutoConfigurations.of(
             OutboxAutoConfiguration.class, KafkaAutoConfiguration.class, JacksonAutoConfiguration.class
         ))
-        .withBean(OutboxEventRepository.class, () -> mock(OutboxEventRepository.class));
+        .withBean(OutboxEventRepository.class, () -> mock(OutboxEventRepository.class))
+        .withBean(TaskScheduler.class, () -> mock(TaskScheduler.class));
 
     @Test
     void recordsAndPublishesByDefault() {
