@@ -7,6 +7,7 @@ import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.common.header.Header;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
 import org.testcontainers.kafka.KafkaContainer;
@@ -38,6 +39,9 @@ class OutboxPublisherIntegrationTest {
 
     @Autowired
     private KafkaContainer kafkaContainer;
+
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
 
     @Test
     void publishesCommittedEventWithItsKeyAndTypeHeaderAndMarksItsRow() {
@@ -108,6 +112,14 @@ class OutboxPublisherIntegrationTest {
             assertThat(JsonPath.<String>read(consumer.awaitRecordFor(key).value(), "$.id")).isEqualTo(id.toString());
             awaitPublished(id);
         }
+    }
+
+    @Test
+    void pollsUnderTheSharedPublisherLock() {
+        awaitPublished(recordCommitted(OutboxUtils.uniqueKey()));
+
+        assertThat(jdbcTemplate.queryForList("SELECT name FROM outbox_shedlock", String.class))
+            .contains("outbox-publisher");
     }
 
     private UUID recordCommitted(String key) {

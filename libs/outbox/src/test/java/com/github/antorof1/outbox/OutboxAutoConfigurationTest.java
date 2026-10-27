@@ -1,5 +1,6 @@
 package com.github.antorof1.outbox;
 
+import net.javacrumbs.shedlock.core.LockProvider;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.autoconfigure.AutoConfigurations;
 import org.springframework.boot.jackson.autoconfigure.JacksonAutoConfiguration;
@@ -36,6 +37,25 @@ class OutboxAutoConfigurationTest {
             .doesNotHaveBean(OutboxPublisher.class)
             .doesNotHaveBean(OutboxSweeper.class)
             .doesNotHaveBean(SchedulingConfigurer.class));
+    }
+
+    @Test
+    void locksPublishingThroughTheDataSource() {
+        contextRunner
+            .withBean(DataSource.class, () -> mock(DataSource.class))
+            .withPropertyValues("app.outbox.schema-migration=false")
+            .run(context -> assertThat(context).hasSingleBean(LockProvider.class));
+    }
+
+    @Test
+    void backsOffWhenServiceProvidesItsOwnLockProvider() {
+        LockProvider serviceLockProvider = mock(LockProvider.class);
+
+        contextRunner
+            .withBean(DataSource.class, () -> mock(DataSource.class))
+            .withBean(LockProvider.class, () -> serviceLockProvider)
+            .withPropertyValues("app.outbox.schema-migration=false")
+            .run(context -> assertThat(context.getBean(LockProvider.class)).isSameAs(serviceLockProvider));
     }
 
     @Test
