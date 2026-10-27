@@ -2,7 +2,8 @@ package com.github.antorof1.inventory.movement;
 
 import com.github.antorof1.events.MovementEvent;
 import com.github.antorof1.events.MovementReason;
-import com.github.antorof1.inventory.idempotency.ProcessedEventService;
+import com.github.antorof1.events.Topics;
+import com.github.antorof1.idempotency.ProcessedEventService;
 import com.github.antorof1.inventory.stock.StockService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -57,14 +58,14 @@ class MovementEventProcessorTest {
         processor.process(event);
 
         InOrder inOrder = inOrder(processedEventService, stockService);
-        inOrder.verify(processedEventService).tryMarkProcessed(event.id());
+        inOrder.verify(processedEventService).tryMarkProcessed(event.id(), Topics.MOVEMENT_EVENTS);
         inOrder.verify(stockService).applyMovement(anyString(), anyString(), anyInt(), any(), any());
     }
 
     @Test
     void skipsAnEventThatWasAlreadyProcessed() {
         MovementEvent event = movementEvent(SKU, 7);
-        given(processedEventService.tryMarkProcessed(event.id())).willReturn(false);
+        given(processedEventService.tryMarkProcessed(event.id(), Topics.MOVEMENT_EVENTS)).willReturn(false);
 
         processor.process(event);
 
@@ -84,6 +85,6 @@ class MovementEventProcessorTest {
     }
 
     private void givenClaimed(MovementEvent event) {
-        given(processedEventService.tryMarkProcessed(event.id())).willReturn(true);
+        given(processedEventService.tryMarkProcessed(event.id(), Topics.MOVEMENT_EVENTS)).willReturn(true);
     }
 }

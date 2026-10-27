@@ -2,8 +2,10 @@ package com.github.antorof1.inventory.movement;
 
 import com.github.antorof1.events.MovementEvent;
 import com.github.antorof1.events.StockLevelEvent;
+import com.github.antorof1.events.Topics;
+import com.github.antorof1.idempotency.ProcessedEventId;
+import com.github.antorof1.idempotency.ProcessedEventRepository;
 import com.github.antorof1.inventory.IntegrationTest;
-import com.github.antorof1.inventory.idempotency.ProcessedEventRepository;
 import com.github.antorof1.inventory.stock.StockRepository;
 import com.github.antorof1.inventory.stock.StockService;
 import com.github.antorof1.inventory.utils.StockLevelTopicConsumer;
@@ -52,7 +54,7 @@ class MovementEventProcessorTransactionTest {
         processor.process(event);
 
         assertThat(stockRepository.findById(stockId(sku)).orElseThrow().getQuantity()).isEqualTo(12);
-        assertThat(processedEventRepository.existsById(event.id())).isTrue();
+        assertThat(processedEventRepository.existsById(new ProcessedEventId(event.id(), Topics.MOVEMENT_EVENTS))).isTrue();
     }
 
     @Test
@@ -66,7 +68,7 @@ class MovementEventProcessorTransactionTest {
             assertThatThrownBy(() -> processor.process(event))
                 .isInstanceOf(DataIntegrityViolationException.class);
 
-            assertThat(processedEventRepository.existsById(event.id()))
+            assertThat(processedEventRepository.existsById(new ProcessedEventId(event.id(), Topics.MOVEMENT_EVENTS)))
                 .as("the marker is claimed up front, so it must roll back with the failed stock write")
                 .isFalse();
             assertThat(stockRepository.findById(stockId(sku))).isEmpty();

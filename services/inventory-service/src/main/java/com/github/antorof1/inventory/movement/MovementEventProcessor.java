@@ -1,7 +1,8 @@
 package com.github.antorof1.inventory.movement;
 
 import com.github.antorof1.events.MovementEvent;
-import com.github.antorof1.inventory.idempotency.ProcessedEventService;
+import com.github.antorof1.events.Topics;
+import com.github.antorof1.idempotency.ProcessedEventService;
 import com.github.antorof1.inventory.stock.StockService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,7 +19,7 @@ public class MovementEventProcessor {
 
     @Transactional
     public void process(MovementEvent event) {
-        if (!processedEventService.tryMarkProcessed(event.id())) return;
+        if (!processedEventService.tryMarkProcessed(event.id(), Topics.MOVEMENT_EVENTS)) return;
 
         stockService.applyMovement(
             event.sku(),

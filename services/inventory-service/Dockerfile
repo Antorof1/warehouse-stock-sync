@@ -4,6 +4,7 @@ WORKDIR /app
 COPY .mvn/ .mvn/
 COPY mvnw pom.xml ./
 COPY libs/events/pom.xml libs/events/
+COPY libs/idempotency/pom.xml libs/idempotency/
 COPY libs/outbox/pom.xml libs/outbox/
 COPY services/warehouse-service/pom.xml services/warehouse-service/
 COPY services/inventory-service/pom.xml services/inventory-service/
@@ -12,6 +13,7 @@ COPY services/notification-service/pom.xml services/notification-service/
 RUN ./mvnw -B -pl services/inventory-service -am dependency:go-offline
 
 COPY libs/events/src libs/events/src
+COPY libs/idempotency/src libs/idempotency/src
 COPY libs/outbox/src libs/outbox/src
 COPY services/inventory-service/src services/inventory-service/src
 RUN ./mvnw -B -pl services/inventory-service -am clean package -DskipTests \

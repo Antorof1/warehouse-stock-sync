@@ -4,7 +4,3 @@ CREATE TABLE stock (
     quantity INTEGER NOT NULL,
     PRIMARY KEY (sku, warehouse_id)
 );
-
-CREATE TABLE processed_events (
-    id UUID PRIMARY KEY
-);

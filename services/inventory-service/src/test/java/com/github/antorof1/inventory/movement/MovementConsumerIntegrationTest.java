@@ -3,8 +3,10 @@ package com.github.antorof1.inventory.movement;
 import com.github.antorof1.events.MovementEvent;
 import com.github.antorof1.events.MovementReason;
 import com.github.antorof1.events.StockLevelEvent;
+import com.github.antorof1.events.Topics;
+import com.github.antorof1.idempotency.ProcessedEventId;
+import com.github.antorof1.idempotency.ProcessedEventRepository;
 import com.github.antorof1.inventory.IntegrationTest;
-import com.github.antorof1.inventory.idempotency.ProcessedEventRepository;
 import com.github.antorof1.inventory.stock.StockRepository;
 import com.github.antorof1.inventory.utils.MovementEventProducer;
 import com.github.antorof1.inventory.utils.StockLevelTopicConsumer;
@@ -89,7 +91,7 @@ class MovementConsumerIntegrationTest {
         producer.publish(event);
 
         awaitQuantity(sku, 4);
-        assertThat(processedEventRepository.existsById(event.id())).isTrue();
+        assertThat(processedEventRepository.existsById(new ProcessedEventId(event.id(), Topics.MOVEMENT_EVENTS))).isTrue();
     }
 
     @Test
