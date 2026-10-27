@@ -1,6 +1,7 @@
 package com.github.antorof1.reorder;
 
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.context.annotation.Import;
 
 import java.lang.annotation.Documented;
@@ -13,6 +14,7 @@ import java.lang.annotation.Target;
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
 @SpringBootTest
+@AutoConfigureMockMvc
 @Import({TestcontainersConfiguration.class})
 public @interface IntegrationTest {
 }

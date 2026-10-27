@@ -60,4 +60,8 @@ public final class ReorderUtils {
     public static String uniqueSku() {
         return "SKU-" + UUID.randomUUID();
     }
+
+    public static String ofLength(char character, int length) {
+        return String.valueOf(character).repeat(length);
+    }
 }
