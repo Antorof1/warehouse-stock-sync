@@ -25,6 +25,7 @@
         <module>libs/events</module>
         <module>libs/outbox</module>
         <module>libs/idempotency</module>
+        <module>libs/kafka-retry</module>
     </modules>
 
     <dependencyManagement>
@@ -49,6 +50,11 @@
             <dependency>
                 <groupId>${project.groupId}</groupId>
                 <artifactId>idempotency</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>${project.groupId}</groupId>
+                <artifactId>kafka-retry</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
