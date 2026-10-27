@@ -1,7 +1,7 @@
 package com.github.antorof1.notification.event;
 
+import com.github.antorof1.idempotency.ProcessedEventService;
 import com.github.antorof1.notification.dispatch.NotificationDispatcher;
-import com.github.antorof1.notification.idempotency.ProcessedEventService;
 import org.springframework.stereotype.Component;
 
 import java.util.UUID;
