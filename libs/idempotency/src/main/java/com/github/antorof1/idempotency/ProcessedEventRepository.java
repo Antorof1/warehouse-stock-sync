@@ -5,6 +5,7 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.time.Instant;
 import java.util.UUID;
 
 public interface ProcessedEventRepository extends JpaRepository<ProcessedEvent, ProcessedEventId> {
@@ -12,4 +13,8 @@ public interface ProcessedEventRepository extends JpaRepository<ProcessedEvent, 
     @Query(value = "INSERT INTO processed_events (event_id, event_topic) VALUES (:id, :topic) ON CONFLICT DO NOTHING",
         nativeQuery = true)
     int insertIgnoreConflict(@Param("id") UUID id, @Param("topic") String topic);
+
+    @Modifying
+    @Query(value = "DELETE FROM ProcessedEvent e WHERE e.processedAt < :cutoff")
+    int deleteProcessedBefore(@Param("cutoff") Instant cutoff);
 }
