@@ -2,6 +2,8 @@ package com.github.antorof1.kafkaretry;
 
 import com.github.antorof1.kafkaretry.testapp.TestEventListener;
 import com.github.antorof1.kafkaretry.utils.TopicConsumer;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.MeterRegistry;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.header.Header;
@@ -48,6 +50,9 @@ class DeadLetterIntegrationTest {
 
     @Autowired
     private KafkaContainer kafkaContainer;
+
+    @Autowired
+    private MeterRegistry meterRegistry;
 
     private TopicConsumer deadLetters;
 
@@ -103,6 +108,21 @@ class DeadLetterIntegrationTest {
     }
 
     @Test
+    void countsFailedDeliveriesAndDeadLetteredRecords() {
+        String key = uniqueKey("broken");
+        double failedBefore = count(KafkaRetryMetrics.FAILED_DELIVERIES);
+        double deadLetteredBefore = count(KafkaRetryMetrics.DEAD_LETTERED);
+
+        publish(key, payload(key));
+
+        deadLetters.awaitRecordFor(key);
+        await().atMost(DELIVERY_TIMEOUT).untilAsserted(() -> {
+            assertThat(count(KafkaRetryMetrics.FAILED_DELIVERIES)).isGreaterThanOrEqualTo(failedBefore + MAX_RETRIES + 1);
+            assertThat(count(KafkaRetryMetrics.DEAD_LETTERED)).isGreaterThanOrEqualTo(deadLetteredBefore + 1);
+        });
+    }
+
+    @Test
     void backsOffExponentiallyBetweenRetries() {
         String key = uniqueKey("broken");
 
@@ -152,6 +172,12 @@ class DeadLetterIntegrationTest {
         } catch (Exception e) {
             throw new IllegalStateException("Failed to publish " + key, e);
         }
+    }
+
+    private double count(String name) {
+        Counter counter = meterRegistry.find(name).tag("topic", TOPIC).tag("group", GROUP_ID).counter();
+
+        return counter == null ? 0 : counter.count();
     }
 
     private static String header(ConsumerRecord<String, String> record, String name) {
