@@ -6,10 +6,14 @@ import org.springframework.dao.DuplicateKeyException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.util.UUID;
 
 import static com.github.antorof1.idempotency.utils.IdempotencyUtils.OTHER_TOPIC;
 import static com.github.antorof1.idempotency.utils.IdempotencyUtils.TOPIC;
+import static com.github.antorof1.idempotency.utils.IdempotencyUtils.exists;
+import static com.github.antorof1.idempotency.utils.IdempotencyUtils.insertProcessedAt;
 import static com.github.antorof1.idempotency.utils.IdempotencyUtils.newEventId;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -85,6 +89,32 @@ class ProcessedEventRepositoryTest {
         assertThatThrownBy(() -> insert(id, TOPIC))
             .as("the primary key is what ON CONFLICT DO NOTHING relies on when two consumers race on one event")
             .isInstanceOf(DuplicateKeyException.class);
+    }
+
+    @Test
+    void stampsWhenAnEventWasProcessed() {
+        ProcessedEventId id = new ProcessedEventId(newEventId(), TOPIC);
+        Instant before = Instant.now().minusSeconds(5);
+
+        processedEventRepository.insertIgnoreConflict(id.eventId(), id.eventTopic());
+
+        assertThat(processedEventRepository.findById(id))
+            .get()
+            .extracting(ProcessedEvent::getProcessedAt)
+            .satisfies(processedAt -> assertThat(processedAt).isAfter(before));
+    }
+
+    @Test
+    void deleteProcessedBeforeRemovesOnlyOldEvents() {
+        Instant cutoff = Instant.now().minus(Duration.ofDays(14));
+        UUID expired = insertProcessedAt(jdbcTemplate, cutoff.minus(Duration.ofDays(1)));
+        UUID recent = insertProcessedAt(jdbcTemplate, cutoff.plus(Duration.ofDays(1)));
+
+        int deleted = processedEventRepository.deleteProcessedBefore(cutoff);
+
+        assertThat(deleted).isPositive();
+        assertThat(exists(jdbcTemplate, expired)).isFalse();
+        assertThat(exists(jdbcTemplate, recent)).isTrue();
     }
 
     private void insert(UUID id, String topic) {
