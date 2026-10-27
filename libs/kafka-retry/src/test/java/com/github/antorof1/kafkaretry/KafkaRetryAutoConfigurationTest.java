@@ -1,5 +1,6 @@
 package com.github.antorof1.kafkaretry;
 
+import org.apache.kafka.clients.producer.ProducerConfig;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.autoconfigure.AutoConfigurations;
 import org.springframework.boot.jackson.autoconfigure.JacksonAutoConfiguration;
@@ -39,6 +40,25 @@ class KafkaRetryAutoConfigurationTest {
         contextRunner.run(context -> assertThat(context)
             .hasSingleBean(KafkaTemplate.class)
             .hasSingleBean(ProducerFactory.class));
+    }
+
+    @Test
+    void deadLetterProducerInheritsTheServiceProducerReliabilitySettings() {
+        contextRunner
+            .withPropertyValues(
+                "spring.kafka.producer.acks=all",
+                "spring.kafka.producer.properties.enable.idempotence=true",
+                "spring.kafka.producer.properties.delivery.timeout.ms=60000"
+            )
+            .run(context -> {
+                KafkaTemplate<?, ?> deadLetterTemplate =
+                    (KafkaTemplate<?, ?>) context.getBean(DeadLetterTemplate.class).operations();
+
+                assertThat(deadLetterTemplate.getProducerFactory().getConfigurationProperties())
+                    .containsEntry(ProducerConfig.ACKS_CONFIG, "all")
+                    .containsEntry(ProducerConfig.ENABLE_IDEMPOTENCE_CONFIG, "true")
+                    .containsEntry(ProducerConfig.DELIVERY_TIMEOUT_MS_CONFIG, "60000");
+            });
     }
 
     @Test
