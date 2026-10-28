@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Stock Sync Simulator</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect x='1' y='5' width='14' height='10' rx='1.5' fill='%234f7cff'/%3E%3Cpath d='M1 6 8 1l7 5' fill='%2390a8ff'/%3E%3C/svg%3E">
+    <link rel="stylesheet" href="app.css">
+</head>
+<body>
+<header class="topbar">
+    <div class="brand">
+        <svg class="brand-icon" viewBox="0 0 16 16" aria-hidden="true">
+            <rect x="1" y="5" width="14" height="10" rx="1.5"/>
+            <path d="M1 6 8 1l7 5" class="roof"/>
+        </svg>
+        <div>
+            <h1>Warehouse Stock Sync</h1>
+            <p class="subtitle">Live simulator</p>
+        </div>
+    </div>
+    <ul class="services" id="services" aria-label="Service health"></ul>
+    <nav class="links" id="links" aria-label="Related tools"></nav>
+    <div class="topbar-end">
+        <span class="connection" id="connection" data-state="connecting">Connecting…</span>
+        <button class="icon-button" id="theme-toggle" type="button" title="Toggle light/dark theme" aria-label="Toggle theme">◐</button>
+    </div>
+</header>
+
+<main class="layout">
+    <section class="column column-controls" aria-label="Controls">
+        <article class="card">
+            <header class="card-header">
+                <h2>Background traffic</h2>
+                <span class="pill" id="traffic-state" data-tone="muted">Stopped</span>
+            </header>
+            <p class="hint">Picks, transfers, adjustments and the odd damaged item across the catalog. Starting it the first time creates reorder rules and opening stock.</p>
+            <div class="row">
+                <button class="button primary" id="traffic-toggle" type="button">Start traffic</button>
+            </div>
+            <label class="field">
+                <span class="field-label">Rate <output id="rate-value">2</output> movements/s</span>
+                <input type="range" id="rate" min="0.2" max="50" step="0.2" value="2">
+            </label>
+            <dl class="stats">
+                <div><dt>Sent</dt><dd id="traffic-sent">0</dd></div>
+                <div><dt>Failed</dt><dd id="traffic-failed">0</dd></div>
+            </dl>
+            <p class="error-text" id="traffic-error" hidden></p>
+        </article>
+
+        <article class="card">
+            <header class="card-header">
+                <h2>Supplier</h2>
+                <span class="pill" id="supplier-state" data-tone="muted">–</span>
+            </header>
+            <p class="hint">Delivers purchase orders for catalog items as <code>RECEIPT</code> movements: a partial shipment first, then the rest.</p>
+            <label class="switch">
+                <input type="checkbox" id="supplier-enabled">
+                <span>Deliver purchase orders</span>
+            </label>
+            <label class="field">
+                <span class="field-label">Lead time</span>
+                <select id="lead-time">
+                    <option value="3">3 s</option>
+                    <option value="5">5 s</option>
+                    <option value="8">8 s</option>
+                    <option value="15">15 s</option>
+                    <option value="30">30 s</option>
+                    <option value="60">60 s</option>
+                </select>
+            </label>
+            <dl class="stats">
+                <div><dt>In transit</dt><dd id="supplier-transit">0</dd></div>
+                <div><dt>Shipments</dt><dd id="supplier-shipments">0</dd></div>
+                <div><dt>Units</dt><dd id="supplier-units">0</dd></div>
+            </dl>
+        </article>
+
+        <article class="card">
+            <header class="card-header">
+                <h2>Scenarios</h2>
+            </header>
+            <div class="scenarios" id="scenario-list"></div>
+        </article>
+
+        <article class="card scenario-log-card">
+            <header class="card-header">
+                <h2 id="scenario-title">Scenario log</h2>
+                <span class="pill" id="scenario-state" data-tone="muted">Idle</span>
+                <button class="button small danger" id="scenario-stop" type="button" hidden>Stop</button>
+            </header>
+            <ol class="scenario-log" id="scenario-log">
+                <li class="empty">Run a scenario to see its steps here.</li>
+            </ol>
+        </article>
+    </section>
+
+    <section class="column column-stock" aria-label="Stock">
+        <article class="card">
+            <header class="card-header">
+                <h2>Stock levels</h2>
+                <span class="hint inline">rebuilt from <code>inventory.stock-level-events</code></span>
+            </header>
+            <ul class="topic-counts" id="topic-counts"></ul>
+            <div class="table-wrap">
+                <table class="stock-table">
+                    <thead>
+                    <tr>
+                        <th scope="col">Item</th>
+                        <th scope="col" class="num">Level</th>
+                        <th scope="col" class="bar-col">Stock vs. reorder rule</th>
+                        <th scope="col">Purchase order</th>
+                    </tr>
+                    </thead>
+                    <tbody id="stock-body">
+                    <tr class="empty-row"><td colspan="4">No stock yet. Start traffic or run a scenario.</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </article>
+    </section>
+
+    <section class="column column-feed" aria-label="Kafka feed">
+        <article class="card feed-card">
+            <header class="card-header">
+                <h2>Live Kafka feed</h2>
+                <button class="button small" id="feed-pause" type="button">Pause</button>
+            </header>
+            <div class="feed-filters" id="feed-filters">
+                <label class="chip" data-kind="movement"><input type="checkbox" value="movement" checked> Movements</label>
+                <label class="chip" data-kind="stock"><input type="checkbox" value="stock" checked> Stock levels</label>
+                <label class="chip" data-kind="order"><input type="checkbox" value="order" checked> Purchase orders</label>
+                <label class="chip" data-kind="dlt"><input type="checkbox" value="dlt" checked> Dead letters</label>
+            </div>
+            <p class="feed-paused" id="feed-paused" hidden></p>
+            <ol class="feed" id="feed"></ol>
+        </article>
+    </section>
+</main>
+
+<div class="toasts" id="toasts" aria-live="polite"></div>
+<script src="app.js"></script>
+</body>
+</html>
