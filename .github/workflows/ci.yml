@@ -54,6 +54,7 @@ jobs:
           - inventory-service
           - reorder-service
           - notification-service
+          - simulator
 
     steps:
       - name: Check out repository
