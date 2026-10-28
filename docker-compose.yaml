@@ -122,6 +122,27 @@ services:
     ports:
       - "${NOTIFICATION_PORT:-8084}:8080"
 
+  simulator:
+    profiles: [ "full" ]
+    build:
+      context: .
+      dockerfile: services/simulator/Dockerfile
+    depends_on:
+      - kafka
+      - warehouse-service
+      - reorder-service
+    environment:
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      APP_SERVICES_WAREHOUSE: http://warehouse-service:8080
+      APP_SERVICES_INVENTORY: http://inventory-service:8080
+      APP_SERVICES_REORDER: http://reorder-service:8080
+      APP_SERVICES_NOTIFICATION: http://notification-service:8080
+      GRAFANA_PORT: ${GRAFANA_PORT:-3000}
+      WAREHOUSE_PORT: ${WAREHOUSE_PORT:-8081}
+      REORDER_PORT: ${REORDER_PORT:-8083}
+    ports:
+      - "${SIMULATOR_PORT:-8085}:8080"
+
   prometheus:
     profiles: [ "full" ]
     image: prom/prometheus:v3.5.0
