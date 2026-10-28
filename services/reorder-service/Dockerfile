@@ -11,6 +11,7 @@ COPY services/warehouse-service/pom.xml services/warehouse-service/
 COPY services/inventory-service/pom.xml services/inventory-service/
 COPY services/reorder-service/pom.xml services/reorder-service/
 COPY services/notification-service/pom.xml services/notification-service/
+COPY services/simulator/pom.xml services/simulator/
 RUN ./mvnw -B -pl services/reorder-service -am dependency:go-offline
 
 COPY libs/events/src libs/events/src

@@ -1,0 +1,67 @@
+spring:
+  application:
+    name: simulator
+  kafka:
+    bootstrap-servers: localhost:29092
+    consumer:
+      group-id: simulator
+      auto-offset-reset: earliest
+      properties:
+        # Pick up dead letter topics soon after the services create them
+        metadata.max.age.ms: 5000
+    producer:
+      acks: all
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, info, prometheus
+  endpoint:
+    health:
+      probes:
+        enabled: true
+  metrics:
+    tags:
+      application: ${spring.application.name}
+
+app:
+  # Base URLs the simulator calls. Docker Compose points them at the service containers.
+  services:
+    warehouse: http://localhost:8081
+    inventory: http://localhost:8082
+    reorder: http://localhost:8083
+    notification: http://localhost:8084
+  # Links in the control panel header. The browser opens them, so they use host ports.
+  links:
+    - { name: Grafana, url: "http://localhost:${GRAFANA_PORT:3000}" }
+    - { name: Kafka UI, url: "http://localhost:8090" }
+    - { name: Warehouse API, url: "http://localhost:${WAREHOUSE_PORT:8081}/swagger-ui.html" }
+    - { name: Reorder API, url: "http://localhost:${REORDER_PORT:8083}/swagger-ui.html" }
+  catalog:
+    warehouses: [ WH-1, WH-2 ]
+    skus:
+      - { sku: SKU-1001, name: Hex bolt M8, reorder-point: 40, reorder-up-to: 200 }
+      - { sku: SKU-1002, name: Wood screw 4x40, reorder-point: 30, reorder-up-to: 150 }
+      - { sku: SKU-2001, name: Cordless drill, reorder-point: 8, reorder-up-to: 40 }
+      - { sku: SKU-2002, name: Angle grinder, reorder-point: 5, reorder-up-to: 25 }
+      - { sku: SKU-3001, name: Safety gloves, reorder-point: 25, reorder-up-to: 120 }
+      - { sku: SKU-3002, name: Hard hat, reorder-point: 10, reorder-up-to: 60 }
+  traffic:
+    rate: 2.0
+    max-pick: 12
+  supplier:
+    enabled: true
+    lead-time: 8s
+    partial-shipments: true
+  scenarios:
+    warehouse-id: WH-1
+    sku-prefix: DEMO-
+    step-delay: 2s
+    await-timeout: 30s
+    # Must be at or above notification-service's bulk-movement threshold (500)
+    bulk-quantity: 600
+    burst-size: 2000
+    burst-concurrency: 16
+  feed:
+    size: 300
