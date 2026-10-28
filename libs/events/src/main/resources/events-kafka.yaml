@@ -1,6 +1,7 @@
 spring:
   kafka:
     consumer:
+      auto-offset-reset: earliest
       properties:
         spring.json.trusted.packages: com.github.antorof1.events*
         spring.json.type.mapping: &types >
